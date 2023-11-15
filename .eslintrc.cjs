@@ -223,26 +223,6 @@ const tsRules = {
 	"@typescript-eslint/triple-slash-reference": "error",
 	"@typescript-eslint/switch-exhaustiveness-check": "warn",
 	"@typescript-eslint/unified-signatures": "warn",
-	// From eslint-plugin-functional
-	"functional/prefer-immutable-types": [
-		"error",
-		{
-			enforcement: "ReadonlyShallow",
-			ignoreInferredTypes: true,
-			ignoreClasses: false,
-			// Allow mutable, mutableValue, mut, or mutVal, and elements
-			ignoreNamePattern: ["mut(able)?([A-Z].*)?", "HTML.*", "^elem(ent)?$"],
-			// Allow Mutable, MutableType, Mut, MutType, as well as elements
-			ignoreTypePattern: ["Mut(able)?([A-Z].*)?", "HTML.*", "^Element$"],
-
-			variables: {
-				ignoreInFunctions: true,
-			},
-			returnTypes: {
-				enforcement: "None",
-			},
-		},
-	],
 };
 /** @type EslintRules */
 const extendsRulesOverrides = {
@@ -265,7 +245,7 @@ const config = {
 	env: {
 		node: true,
 	},
-	plugins: ["@typescript-eslint", "functional"],
+	plugins: ["@typescript-eslint"],
 	extends: [
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended-requiring-type-checking",
