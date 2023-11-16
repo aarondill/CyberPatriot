@@ -7,6 +7,7 @@
 	"author": "aarondill <aaronsacks2006@gmail.com>",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"type": "module",
 	"files": [
 		"dist"
 	],
@@ -41,5 +42,8 @@
 	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"zx": "^7.2.3"
 	}
 }
