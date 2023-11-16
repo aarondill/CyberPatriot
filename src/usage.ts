@@ -1,5 +1,6 @@
 import { Readable } from "stream";
 import { isProcessOutput, pstdin } from "./util/init.js";
+import os from "node:os";
 import { echo, $ } from "zx";
 
 export async function tryCatch() {
