@@ -1,6 +1,7 @@
 import type { Readable } from "stream";
 import type { ProcessPromise } from "zx";
-import { isNodeError } from "./init.js";
+import { isNodeError, isPathLike } from "./init.js";
+import type { PathLike } from "fs";
 
 type StdIn = ProcessPromise["stdin"];
 type PipeOpts = { end?: boolean };
@@ -14,7 +15,11 @@ export interface ChainableStdin {
 	once: (...args: Parameters<StdIn["once"]>) => ChainableStdin;
 	// Note: opts are only used with a Readable. ProcessPromise will ignore them.
 	// Handle multiple yourself.
-	pipe(src: ProcessPromise | Readable, opts?: PipeOpts): ProcessPromise;
+	// If PathLike is passed, it will be converted to a stream using fs.createReadStream, then read and closed.
+	pipe(
+		src: ProcessPromise | Readable | PathLike,
+		opts?: PipeOpts
+	): ProcessPromise;
 	stream: StdIn;
 	// Don't use this unless you know what you're doing. It's better to call `end` and get the process back that way.
 	process: ProcessPromise;
@@ -44,7 +49,11 @@ export function pstdin(p: ProcessPromise): ChainableStdin {
 		on: (...args) => (stdin.on(...args), ret),
 		off: (...args) => (stdin.off(...args), ret),
 		once: (...args) => (stdin.once(...args), ret),
-		pipe: (src, opts) => (src.pipe(stdin, opts), p),
+		pipe: (src, opts) => {
+			if (isPathLike(src)) src = fs.createReadStream(src);
+			void src.pipe(stdin, opts);
+			return p;
+		},
 		stream: stdin,
 		process: p,
 	};

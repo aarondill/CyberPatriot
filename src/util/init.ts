@@ -1,5 +1,6 @@
 import { ProcessOutput } from "zx";
 import { spawn, type SpawnOptions } from "node:child_process";
+import type { PathLike } from "node:fs";
 export * from "./pstdin.js";
 
 export function isProcessOutput(err: unknown): err is ProcessOutput {
@@ -14,6 +15,8 @@ export function isNodeError(value: unknown): value is NodeJS.ErrnoException {
 	if ("errno" in value && typeof value.errno !== "number") return false; // errno?: number | undefined;
 	return true;
 }
+export const isPathLike = (x: unknown): x is PathLike =>
+	typeof x === "string" || x instanceof Buffer || x instanceof URL;
 
 export const run = (args: readonly string[], options?: SpawnOptions) =>
 	spawn(args[0], args.slice(1), options ?? {});
