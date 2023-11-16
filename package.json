@@ -12,6 +12,7 @@
 		"dist"
 	],
 	"scripts": {
+		"start": "yarpm run build && node ./dist/run.js",
 		"build": "yarpm run tsc:build",
 		"clean": "rimraf dist",
 		"lint": "yarpm run lint:eslint && yarpm run lint:prettier && yarpm run sort-package",
