@@ -2,11 +2,11 @@
 	"name": "cyberpatriot",
 	"version": "0.0.0",
 	"description": "Scripts for CyberPatriot",
-	"repository": "",
+	"repository": "https://github.com/aarondill/CyberPatriot",
+	"private": true,
 	"license": "MIT",
 	"author": "aarondill <aaronsacks2006@gmail.com>",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "dist/run.js",
 	"type": "module",
 	"files": [
 		"dist"
