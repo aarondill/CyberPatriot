@@ -16,7 +16,9 @@
 		"resolveJsonModule": true,
 		"alwaysStrict": true,
 		"noImplicitAny": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"checkJs": true,
+		"allowJs": true
 	},
 	"include": ["src"],
 	"exclude": ["dist"]
