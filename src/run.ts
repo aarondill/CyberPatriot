@@ -13,12 +13,17 @@ declare global {
 // }}}
 import "zx/globals";
 import { $ } from "zx";
+import { abort, confirm } from "./util/init.js";
+import { hostname, userInfo } from "node:os";
 
 $.prefix = "set -euC -o pipefail;";
 
 async function main(args: string[]) {
 	void args;
 	// Do some things!
+	const { username } = userInfo();
+	const msg = `run the script on this machine (${username}:${hostname()})`;
+	if (!(await confirm(msg, false))) return abort(null, 1);
 
 	return await Promise.resolve(0);
 }
