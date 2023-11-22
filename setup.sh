@@ -24,4 +24,5 @@ if ! has_cmd n; then
 fi
 
 log "Setting up node using n!"
-sudo n latest
+n=$(command -v n)
+sudo "$n" latest
