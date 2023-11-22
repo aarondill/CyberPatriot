@@ -12,8 +12,8 @@ declare global {
 }
 // }}}
 // import "zx/globals";
-import { $, chalk, which } from "zx";
-import { abort, colors, confirm, isVM } from "./util/init.js";
+import { $, which } from "zx";
+import { abort, confirm, isVM, warn } from "./util/init.js";
 import { hostname, userInfo } from "node:os";
 import path from "node:path";
 import { isWindows } from "./util/contants.js";
@@ -27,12 +27,7 @@ if (isWindows && path.basename($.shell.toString()) !== "powershell.exe") {
 async function main(args: string[]) {
 	void args;
 	if (!(await isVM()))
-		console.error(
-			colors(
-				chalk.yellowBright.bold,
-				"Warning: This machine was not detected as a virtual machine!"
-			)
-		);
+		warn("Warning: This machine was not detected as a virtual machine!");
 
 	const { username } = userInfo();
 	const msg = `run the script on this machine (${username}:${hostname()})`;
