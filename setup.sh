@@ -36,6 +36,11 @@ if ! has_cmd n; then
   done
 fi
 
+if ! has_cmd n; then
+  log "Could not find n! Please install n or a package manager!" >&2
+  exit 1
+fi
+
 log "Setting up node using n!"
 n=$(command -v n)
 sudo "$n" latest
