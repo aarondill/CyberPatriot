@@ -12,6 +12,7 @@
 		"dist"
 	],
 	"scripts": {
+		"setup": "./setup.sh",
 		"start": "./yarpm.js run build && node ./dist/run.js",
 		"build": "./yarpm.js run tsc:build",
 		"clean": "rimraf dist",
@@ -44,6 +45,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"zx": "^7.2.3"
+		"zx": "^7.2.3",
+		"n": "^9.2.0"
 	}
 }
