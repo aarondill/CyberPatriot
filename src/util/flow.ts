@@ -27,9 +27,18 @@ export function colors(chalkFunc: (arg0: string) => string, s: string) {
 	if (process.env.NO_COLOR && process.env.NO_COLOR.trim() !== "") return s;
 	return chalkFunc(s);
 }
+
+export function warn(s: string): false {
+	console.error(colors(chalk.bold.yellowBright, s));
+	return false;
+}
+export function error(s: string): false {
+	console.error(colors(chalk.bold.red, s));
+	return false;
+}
 // Note: This does not exit the process! Make sure you return after this!
 export function abort(msg?: string | null, code?: number | null): number {
-	console.error(colors(chalk.bold.red, msg ? `Aborting: ${msg}` : "Aborting"));
+	error(msg ? `Aborting: ${msg}` : "Aborting");
 	process.exitCode = code ?? 1;
 	return code ?? 1;
 }
