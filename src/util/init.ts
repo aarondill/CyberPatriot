@@ -1,5 +1,6 @@
 export * from "./pstdin.js";
 export * from "./flow.js";
+export * from "./vm.js";
 
 import { ProcessOutput } from "zx";
 import { spawn, type SpawnOptions } from "node:child_process";

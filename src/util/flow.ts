@@ -28,7 +28,8 @@ export function colors(chalkFunc: (arg0: string) => string, s: string) {
 	return chalkFunc(s);
 }
 // Note: This does not exit the process! Make sure you return after this!
-export function abort(msg?: string | null, code?: number | null): void {
+export function abort(msg?: string | null, code?: number | null): number {
 	console.error(colors(chalk.bold.red, msg ? `Aborting: ${msg}` : "Aborting"));
 	process.exitCode = code ?? 1;
+	return code ?? 1;
 }

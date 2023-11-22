@@ -11,23 +11,36 @@ declare global {
 	}
 }
 // }}}
-import "zx/globals";
-import { $ } from "zx";
-import { abort, confirm } from "./util/init.js";
+// import "zx/globals";
+import { $, chalk, which } from "zx";
+import { abort, colors, confirm, isVM } from "./util/init.js";
 import { hostname, userInfo } from "node:os";
+import path from "node:path";
+import { isWindows } from "./util/contants.js";
 
 $.prefix = "set -euC -o pipefail;";
+// Check $.shell before running which.sync
+if (isWindows && path.basename($.shell.toString()) !== "powershell.exe") {
+	$.shell = which.sync("powershell.exe"); // On windows, use powershell, not cmd.exe!
+}
 
 async function main(args: string[]) {
 	void args;
-	// Do some things!
+	if (!(await isVM()))
+		console.error(
+			colors(
+				chalk.yellowBright.bold,
+				"Warning: This machine was not detected as a virtual machine!"
+			)
+		);
+
 	const { username } = userInfo();
 	const msg = `run the script on this machine (${username}:${hostname()})`;
 	if (!(await confirm(msg, false))) return abort(null, 1);
 
-	return await Promise.resolve(0);
+	return 0;
 }
 
-void Promise.resolve(main(process.argv.slice(2))).then(c =>
-	process.exit(c ?? 0)
+void Promise.resolve(main(process.argv.slice(2))).then(
+	c => (process.exitCode = c ?? 0)
 );

@@ -1,5 +1,6 @@
 import type { Readable } from "stream";
-import type { ProcessPromise } from "zx";
+import fs from "node:fs";
+import { type ProcessPromise } from "zx";
 import { isNodeError, isPathLike } from "./init.js";
 import type { PathLike } from "fs";
 
