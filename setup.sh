@@ -19,7 +19,7 @@ if has_cmd node; then
   log "Node version $node_version is currently installed"
   node_major="${node_version%%.*}"
   node_major="${node_major#v}"
-  if [ "$node_major" -ge "$MIN_NODE_MAJOR" ]; then
+  if [ -n "$node_major" ] && [ "$node_major" -ge "$MIN_NODE_MAJOR" ]; then
     log "Node v$node_major is >= $MIN_NODE_MAJOR! We have achieved setup."
     exit 0
   fi
