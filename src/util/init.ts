@@ -1,7 +1,9 @@
+export * from "./pstdin.js";
+export * from "./flow.js";
+
 import { ProcessOutput } from "zx";
 import { spawn, type SpawnOptions } from "node:child_process";
 import type { PathLike } from "node:fs";
-export * from "./pstdin.js";
 
 export function isProcessOutput(err: unknown): err is ProcessOutput {
 	return err instanceof ProcessOutput;
