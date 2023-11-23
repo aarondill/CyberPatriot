@@ -3,7 +3,7 @@ import path from "path";
 import os from "os";
 import { fs as fsExtra } from "zx";
 import fs from "node:fs/promises";
-import { isNodeError } from "./init.js";
+import { isNodeError, warn } from "./init.js";
 import { isNativeError } from "util/types";
 
 export const BACKUP_DIR = path.join(os.homedir(), "file-backups");
@@ -13,7 +13,7 @@ async function ensureBackupDirectory() {
 }
 
 // Backup src to BACKUP_DIR
-export async function backup(src: string) {
+export async function backup(src: string): Promise<boolean> {
 	const dest = await ensureBackupDirectory();
 	const newDest = path.join(dest, src);
 	const newDestExists = await fs
@@ -23,17 +23,20 @@ export async function backup(src: string) {
 			if (!isNodeError(e)) throw e;
 			return false;
 		});
-	if (newDestExists) throw new Error("Can not overwrite existing backup file");
+	if (newDestExists)
+		return warn("Refusing to overwrite existing backup file: " + newDest);
 
 	await fs.mkdir(path.dirname(newDest), { recursive: true }); // ensure parents exist
 
 	const stat = await fs.stat(src);
 	if (!stat.isDirectory()) {
-		return await fs.copyFile(src, newDest);
+		await fs.copyFile(src, newDest);
+		return true;
 	}
 
 	await fs.mkdir(newDest);
 	await fsExtra.copy(src, newDest);
+	return true;
 }
 const appendNewline = (s: string) => (s.endsWith("\n") ? s : s + "\n");
 export async function mapFile(
