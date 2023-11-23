@@ -4,7 +4,7 @@ import os from "os";
 import { fs as fsExtra } from "zx";
 import fs from "node:fs/promises";
 import { fileExists, warn } from "./index.js";
-import { isNativeError } from "util/types";
+import { isNativeError } from "node:util/types";
 
 export const BACKUP_DIR = path.join(os.userInfo().homedir, "file-backups");
 async function ensureBackupDirectory() {

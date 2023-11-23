@@ -1,10 +1,14 @@
 import fs from "node:fs/promises";
 import { $, echo, which } from "zx";
 import type { Action } from "./index.js";
-import { error, isProcessOutput } from "../util/index.js";
-import { isWindows } from "../util/constants.js";
-import backup, { mapFile } from "../util/backup.js";
-import { useRoot } from "../util/root.js";
+import {
+	error,
+	isProcessOutput,
+	isWindows,
+	useRoot,
+	backup,
+	mapFile,
+} from "../util/index.js";
 
 // NOTE: because euid is changed, not uid, child processes are spawned as root!
 

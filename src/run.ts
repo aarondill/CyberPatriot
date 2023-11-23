@@ -13,12 +13,18 @@ declare global {
 // }}}
 // import "zx/globals";
 import { $, which } from "zx";
-import { abort, confirm, error, isVM, warn } from "./util/index.js";
+import {
+	abort,
+	confirm,
+	error,
+	isVM,
+	warn,
+	isWindows,
+	assertRoot,
+} from "./util/index.js";
 import { hostname, userInfo } from "node:os";
 import path from "node:path";
-import { isWindows } from "./util/constants.js";
 import { runActions } from "./actions/index.js";
-import { assertRoot } from "./util/root.js";
 
 $.prefix = "set -euC -o pipefail;";
 // Check $.shell before running which.sync
