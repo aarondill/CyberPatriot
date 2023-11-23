@@ -6,7 +6,7 @@ import fs from "node:fs/promises";
 import { isNodeError, warn } from "./init.js";
 import { isNativeError } from "util/types";
 
-export const BACKUP_DIR = path.join(os.homedir(), "file-backups");
+export const BACKUP_DIR = path.join(os.userInfo().homedir, "file-backups");
 async function ensureBackupDirectory() {
 	await fs.mkdir(BACKUP_DIR, { recursive: true });
 	return BACKUP_DIR;
@@ -28,6 +28,7 @@ export async function backup(src: string): Promise<boolean> {
 
 	await fs.mkdir(path.dirname(newDest), { recursive: true }); // ensure parents exist
 
+	console.log(`Backing up file '${src}' to '${dest}'`);
 	const stat = await fs.stat(src);
 	if (!stat.isDirectory()) {
 		await fs.copyFile(src, newDest);
