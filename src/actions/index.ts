@@ -18,9 +18,8 @@ export async function* getActionList() {
 	const thisfile = path.resolve(fileURLToPath(import.meta.url));
 	const base = path.dirname(thisfile);
 	const dir = await fs.opendir(base);
-
-	let next;
-	while ((next = await dir.read())) {
+	// This will close the dir automagically
+	for await (const next of dir) {
 		const filepath = path.join(base, next.name);
 		if (filepath === thisfile) continue; // No recursive import!
 
