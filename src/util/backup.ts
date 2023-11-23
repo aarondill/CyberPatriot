@@ -3,7 +3,7 @@ import path from "path";
 import os from "os";
 import { fs as fsExtra } from "zx";
 import fs from "node:fs/promises";
-import { isNodeError, warn } from "./index.js";
+import { fileExists, warn } from "./index.js";
 import { isNativeError } from "util/types";
 
 export const BACKUP_DIR = path.join(os.userInfo().homedir, "file-backups");
@@ -16,14 +16,7 @@ async function ensureBackupDirectory() {
 export async function backup(src: string): Promise<boolean> {
 	const dest = await ensureBackupDirectory();
 	const newDest = path.join(dest, src);
-	const newDestExists = await fs
-		.access(newDest)
-		.then(() => true)
-		.catch(e => {
-			if (!isNodeError(e)) throw e;
-			return false;
-		});
-	if (newDestExists)
+	if (await fileExists(newDest))
 		return warn("Refusing to overwrite existing backup file: " + newDest);
 
 	await fs.mkdir(path.dirname(newDest), { recursive: true }); // ensure parents exist
