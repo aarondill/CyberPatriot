@@ -4,10 +4,12 @@ export * from "./vm.js";
 export * from "./constants.js";
 export * from "./backup.js";
 export * from "./root.js";
+export * from "./generator.js";
 
 import { ProcessOutput } from "zx";
 import { spawn, type SpawnOptions } from "node:child_process";
 import type { PathLike } from "node:fs";
+import type { FileHandle } from "node:fs/promises";
 import fs from "node:fs/promises";
 
 export function isProcessOutput(err: unknown): err is ProcessOutput {
@@ -35,5 +37,20 @@ export async function fileExists(file: PathLike) {
 	} catch (e) {
 		if (isNodeError(e)) return false;
 		throw e; // this is unexpected. Throw it.
+	}
+}
+
+export async function openFile<R, A extends unknown[]>(
+	path: string,
+	mode: string | undefined,
+	cb: (fd: FileHandle, ...args: A) => R | PromiseLike<R>,
+	...args: A
+): Promise<R> {
+	let fd;
+	try {
+		fd = await fs.open(path, mode);
+		return await cb(fd, ...args);
+	} finally {
+		await fd?.close();
 	}
 }
