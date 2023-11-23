@@ -32,7 +32,8 @@ export async function fileExists(file: PathLike) {
 	try {
 		await fs.access(file, fs.constants.F_OK);
 		return true;
-	} catch {
-		return false;
+	} catch (e) {
+		if (isNodeError(e)) return false;
+		throw e; // this is unexpected. Throw it.
 	}
 }
