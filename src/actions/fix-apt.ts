@@ -37,15 +37,14 @@ async function fixApt() {
 	await useRoot(backup, "/etc/apt/sources.list");
 	await useRoot(mapFile, "/etc/apt/sources.list", line => {
 		line = line.trim().replaceAll(/(\s){2,}/g, "$1"); // collapse whitespace
+		if (line === "") return line;
 		if (line.startsWith("deb cdrom:")) return `# ${line}`;
-		if (line.startsWith("#")) {
-			if (!line.includes("deb ")) return line; // keep comments
-			// Note the trailing space!
-			// Remove comment and whitespace
-			if (line.includes("ubuntu.com/ubuntu ")) return line.substring(2);
+		// Note the trailing space!
+		// Remove comment and whitespace
+		if (line.match(/^(#%s*)?deb https:\/\/.*\.ubuntu\.com\/ubuntu /))
+			return line.startsWith("#") ? line.replace(/^# /, "") : line;
 
-			return line; // keep comments
-		}
+		if (line.startsWith("#")) return line; // keep comments
 		return `# ${line}`; // Comment all other entries
 	});
 
