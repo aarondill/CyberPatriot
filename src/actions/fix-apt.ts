@@ -20,6 +20,8 @@ async function updateApt(apt: string) {
 	}
 }
 
+// TODO: make this work with debian
+const repoRegex = /^(#%s*)?deb https?:\/\/.*\.ubuntu\.com\/ubuntu /;
 async function fixApt() {
 	if (isWindows) return true; // on windows this is a noop
 	const apt = await which("apt", { nothrow: true });
@@ -41,7 +43,7 @@ async function fixApt() {
 		if (line.startsWith("deb cdrom:")) return `# ${line}`;
 		// Note the trailing space!
 		// Remove comment and whitespace
-		if (line.match(/^(#%s*)?deb https?:\/\/.*\.ubuntu\.com\/ubuntu /))
+		if (line.match(repoRegex))
 			return line.startsWith("#") ? line.replace(/^# /, "") : line;
 
 		if (line.startsWith("#")) return line; // keep comments
