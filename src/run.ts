@@ -13,10 +13,12 @@ declare global {
 // }}}
 // import "zx/globals";
 import { $, which } from "zx";
-import { abort, confirm, isVM, warn } from "./util/init.js";
+import { abort, confirm, error, isVM, warn } from "./util/init.js";
 import { hostname, userInfo } from "node:os";
 import path from "node:path";
-import { isWindows } from "./util/contants.js";
+import { isWindows } from "./util/constants.js";
+import { runActions } from "./actions/index.js";
+import { assertRoot } from "./util/root.js";
 
 $.prefix = "set -euC -o pipefail;";
 // Check $.shell before running which.sync
@@ -25,13 +27,17 @@ if (isWindows && path.basename($.shell.toString()) !== "powershell.exe") {
 }
 
 async function main(args: string[]) {
-	void args;
+	const errmsg = assertRoot();
+	if (errmsg) return error(errmsg), 3;
+
 	if (!(await isVM()))
 		warn("Warning: This machine was not detected as a virtual machine!");
 
 	const { username } = userInfo();
 	const msg = `run the script on this machine (${username}:${hostname()})`;
 	if (!(await confirm(msg, false))) return abort(null, 1);
+
+	await runActions(args);
 
 	return 0;
 }
