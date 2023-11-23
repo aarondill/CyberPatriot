@@ -15,24 +15,27 @@ import { fileExists } from "../util/index.js";
 
 // Returns a string that can be used to import() actions
 export async function* getActionList() {
-	const thisfile = fileURLToPath(import.meta.url);
+	const thisfile = path.resolve(fileURLToPath(import.meta.url));
 	const base = path.dirname(thisfile);
 	const dir = await fs.opendir(base);
 
 	let next;
 	while ((next = await dir.read())) {
-		// Check if it's a directory, if so return ./actions/dir/index.js
+		const filepath = path.join(base, next.name);
+		if (filepath === thisfile) continue; // No recursive import!
+
 		if (next.isDirectory()) {
-			const index = path.join(base, next.name, "index.js");
+			// Check if it's a directory, if so return ./actions/dir/index.js
+			const index = path.join(filepath, "index.js");
 			if (!(await fileExists(index))) continue;
 			yield index;
 		}
 		// Not a file or directory. move on.
 		if (!next.isFile()) continue;
 		// Not a .js file. move on.
-		if (path.extname(next.name) !== ".js") continue;
+		if (path.extname(filepath) !== ".js") continue;
 		// return ./actions/file.js
-		yield path.join(base, next.name);
+		yield filepath;
 	}
 }
 
