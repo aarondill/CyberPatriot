@@ -1,4 +1,4 @@
-import { Readable } from "stream";
+import { Readable } from "node:stream";
 import { isProcessOutput, pstdin } from "./util/index.js";
 import os from "node:os";
 import { echo, $ } from "zx";

@@ -1,8 +1,8 @@
-import type { Readable } from "stream";
+import type { Readable } from "node:stream";
 import fs from "node:fs";
 import { type ProcessPromise } from "zx";
 import { isNodeError, isPathLike } from "./index.js";
-import type { PathLike } from "fs";
+import type { PathLike } from "node:fs";
 
 type StdIn = ProcessPromise["stdin"];
 type PipeOpts = { end?: boolean };
