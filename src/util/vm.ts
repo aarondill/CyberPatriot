@@ -14,21 +14,19 @@ async function isVMWindows() {
 async function isVMUnix() {
 	if (isWindows) throw new Error("isVMUnix called on Windows");
 	// check for 'hypervisor'
-	let ret = false;
 	let fd;
 	try {
 		fd = await fs.open("/proc/cpuinfo", "r");
 		for await (let line of fd.readLines()) {
 			if (!line.startsWith("flags")) continue;
-			// Stop processing the file!
 			line = line.substring(line.indexOf(":")); // remove `flags .*:`
 			line += " "; // Add a space to the end
-			ret = line.includes(" hypervisor "); // check for hypervisor (not a substring, spaces!)
+			return line.includes(" hypervisor "); // check for hypervisor (not a substring, spaces!)
 		}
+		return false;
 	} finally {
 		await fd?.close();
 	}
-	return ret;
 }
 
 // This function performs file operations. You should probably cache it!
