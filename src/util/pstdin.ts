@@ -1,7 +1,7 @@
 import type { Readable } from "stream";
 import fs from "node:fs";
 import { type ProcessPromise } from "zx";
-import { isNodeError, isPathLike } from "./init.js";
+import { isNodeError, isPathLike } from "./index.js";
 import type { PathLike } from "fs";
 
 type StdIn = ProcessPromise["stdin"];

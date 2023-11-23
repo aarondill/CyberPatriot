@@ -3,7 +3,7 @@ import path from "path";
 import os from "os";
 import { fs as fsExtra } from "zx";
 import fs from "node:fs/promises";
-import { isNodeError, warn } from "./init.js";
+import { isNodeError, warn } from "./index.js";
 import { isNativeError } from "util/types";
 
 export const BACKUP_DIR = path.join(os.userInfo().homedir, "file-backups");

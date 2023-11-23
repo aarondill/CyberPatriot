@@ -1,10 +1,14 @@
 export * from "./pstdin.js";
 export * from "./flow.js";
 export * from "./vm.js";
+export * from "./constants.js";
+export * from "./backup.js";
+export * from "./root.js";
 
 import { ProcessOutput } from "zx";
 import { spawn, type SpawnOptions } from "node:child_process";
 import type { PathLike } from "node:fs";
+import fs from "node:fs/promises";
 
 export function isProcessOutput(err: unknown): err is ProcessOutput {
 	return err instanceof ProcessOutput;
@@ -23,3 +27,12 @@ export const isPathLike = (x: unknown): x is PathLike =>
 
 export const run = (args: readonly string[], options?: SpawnOptions) =>
 	spawn(args[0], args.slice(1), options ?? {});
+
+export async function fileExists(file: PathLike) {
+	try {
+		await fs.access(file, fs.constants.F_OK);
+		return true;
+	} catch {
+		return false;
+	}
+}

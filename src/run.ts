@@ -13,7 +13,7 @@ declare global {
 // }}}
 // import "zx/globals";
 import { $, which } from "zx";
-import { abort, confirm, error, isVM, warn } from "./util/init.js";
+import { abort, confirm, error, isVM, warn } from "./util/index.js";
 import { hostname, userInfo } from "node:os";
 import path from "node:path";
 import { isWindows } from "./util/constants.js";

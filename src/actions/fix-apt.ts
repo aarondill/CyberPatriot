@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import { $, echo, which } from "zx";
 import type { Action } from "./index.js";
-import { error, isProcessOutput } from "../util/init.js";
+import { error, isProcessOutput } from "../util/index.js";
 import { isWindows } from "../util/constants.js";
 import backup, { mapFile } from "../util/backup.js";
 import { useRoot } from "../util/root.js";
