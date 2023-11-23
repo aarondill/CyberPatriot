@@ -56,7 +56,7 @@ export async function mapFile(
 		fd = await fs.open(file, "r");
 		for await (const line of fd.readLines()) {
 			const newLine = cb(line);
-			if (newLine) newStream.write(appendNewline(newLine));
+			if (typeof newLine === "string") newStream.write(appendNewline(newLine));
 		}
 		newStream.close(); // This closes the fdNew
 
