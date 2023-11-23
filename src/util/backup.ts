@@ -3,7 +3,6 @@ import os from "node:os";
 import { fs as fsExtra } from "zx";
 import fs from "node:fs/promises";
 import { fileExists, warn } from "./index.js";
-import { isNativeError } from "node:util/types";
 
 export const BACKUP_DIR = path.join(os.userInfo().homedir, "file-backups");
 async function ensureBackupDirectory() {
@@ -41,7 +40,6 @@ export async function mapFile(
 	const newPath = path.join(tmpdir, path.basename(file));
 
 	let fdNew, fd, newStream;
-	let error: Error | undefined;
 	try {
 		fdNew = await fs.open(newPath, "w");
 		newStream = fdNew.createWriteStream({ autoClose: true });
@@ -54,15 +52,11 @@ export async function mapFile(
 		newStream.close(); // This closes the fdNew
 
 		await fs.copyFile(newPath, file); // overwrite existing file
-	} catch (e) {
-		if (isNativeError(e) || e instanceof Error) error = e;
-		else error = new Error(String(e));
 	} finally {
 		newStream?.close();
 		await fdNew?.close();
 		await fd?.close();
 		await fs.rm(tmpdir, { recursive: true, force: true }); // clean up the temp dir
 	}
-	if (error) throw error;
 }
 export default backup;
