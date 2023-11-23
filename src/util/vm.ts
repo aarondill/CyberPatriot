@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { $ } from "zx";
-import { isWindows } from "./contants.js";
+import { isWindows } from "./constants.js";
 
 // TODO: Test this!
 async function isVMWindows() {
