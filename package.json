@@ -13,7 +13,7 @@
 	],
 	"scripts": {
 		"setup": "./setup.sh",
-		"start": "./yarpm.js run build && node ./dist/run.js",
+		"start": "./yarpm.js run build && sudo node ./dist/run.js",
 		"build": "./yarpm.js run tsc:build",
 		"clean": "rimraf dist",
 		"lint": "./yarpm.js run lint:eslint && yarpm run lint:prettier && yarpm run sort-package",
