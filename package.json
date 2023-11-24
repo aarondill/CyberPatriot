@@ -1,19 +1,17 @@
 {
 	"name": "cyberpatriot",
 	"version": "0.0.0",
+	"private": true,
 	"description": "Scripts for CyberPatriot",
 	"repository": "https://github.com/aarondill/CyberPatriot",
-	"private": true,
 	"license": "MIT",
 	"author": "aarondill <aaronsacks2006@gmail.com>",
-	"main": "dist/run.js",
 	"type": "module",
+	"main": "dist/run.js",
 	"files": [
 		"dist"
 	],
 	"scripts": {
-		"setup": "./setup.sh",
-		"start": "./yarpm.js run build && sudo node ./dist/run.js",
 		"build": "./yarpm.js run tsc:build",
 		"clean": "rimraf dist",
 		"lint": "./yarpm.js run lint:eslint && ./yarpm.js run lint:prettier && ./yarpm.js run sort-package",
@@ -22,12 +20,18 @@
 		"prepublishOnly": "./yarpm.js run build",
 		"release": "./yarpm.js run lint && ./yarpm.js run release:release-it",
 		"release:release-it": "release-it",
+		"setup": "./setup.sh",
 		"sort-package": "sort-package-json",
+		"start": "./yarpm.js run build && sudo node ./dist/run.js",
 		"test": "./yarpm.js run test:typecheck && ./yarpm.js run lint",
 		"test:typecheck": "tsc -p ./tsconfig.eslint.json --noEmit --skipLibCheck",
 		"tsc:build": "./yarpm.js run clean && tsc --build",
 		"tsc:watch": "./yarpm.js run clean && tsc --watch",
 		"watch": "./yarpm.js run lint && ./yarpm.js run tsc:watch"
+	},
+	"dependencies": {
+		"n": "^9.2.0",
+		"zx": "^7.2.3"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^2.1.3",
@@ -44,9 +48,5 @@
 	},
 	"publishConfig": {
 		"access": "public"
-	},
-	"dependencies": {
-		"zx": "^7.2.3",
-		"n": "^9.2.0"
 	}
 }
