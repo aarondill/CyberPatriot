@@ -1,0 +1,9 @@
+<!-- vim:set ft=markdown: -->
+- get the list of permitted users/admins
+	- Do we scrape the readme URL?
+	- Ask for a file input?
+	- Ask for arguments (that's a lot!)
+- Make apt/sources.list work on Debian too
+  - Check different repo urls (allow any?)
+- Test on windows!
+  - Develop parts for windows (actions/windows/index.js)
