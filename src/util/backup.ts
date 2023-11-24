@@ -2,7 +2,9 @@ import path from "node:path";
 import os from "node:os";
 import { fs as fsExtra } from "zx";
 import fs from "node:fs/promises";
-import { fileExists, warn } from "./index.js";
+import { createWriteStream } from "node:fs";
+import { fileExists, openFile, warn } from "./index.js";
+import { once } from "node:events";
 
 export const BACKUP_DIR = path.join(os.userInfo().homedir, "file-backups");
 async function ensureBackupDirectory() {
@@ -33,28 +35,34 @@ export async function backup(src: string): Promise<boolean> {
 const appendNewline = (s: string) => (s.endsWith("\n") ? s : s + "\n");
 export async function mapFile(
 	file: string,
-	cb: (line: string) => string | undefined | null
+	// False means stop -- Don't write any more. The rest of the file will be lost
+	cb: (line: string) => string | undefined | null | false
 ) {
 	file = path.normalize(file);
 	const tmpdir = await fs.mkdtemp(path.join(os.tmpdir(), "new-file-"));
 	const newPath = path.join(tmpdir, path.basename(file));
 
-	let fdNew, fd, newStream;
+	let fd, newStream;
 	try {
-		fdNew = await fs.open(newPath, "w");
-		newStream = fdNew.createWriteStream({ autoClose: true });
-
 		fd = await fs.open(file, "r");
-		for await (const line of fd.readLines()) {
+		const mode = (await fd.stat()).mode;
+
+		// Keep the same permissions as the existing file
+		newStream = createWriteStream(newPath, { flags: "wx", mode: mode });
+		await once(newStream, "open");
+
+		for await (const line of fd.readLines({ autoClose: true })) {
 			const newLine = cb(line);
-			if (typeof newLine === "string") newStream.write(appendNewline(newLine));
+			if (newLine === false) break;
+			if (typeof newLine !== "string") continue;
+			newStream.write(appendNewline(newLine));
 		}
-		newStream.close(); // This closes the fdNew
+		newStream.close();
+		await once(newStream, "close");
 
 		await fs.copyFile(newPath, file); // overwrite existing file
 	} finally {
 		newStream?.close();
-		await fdNew?.close();
 		await fd?.close();
 		await fs.rm(tmpdir, { recursive: true, force: true }); // clean up the temp dir
 	}
