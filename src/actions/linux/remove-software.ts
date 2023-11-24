@@ -1,11 +1,10 @@
 import { $ } from "zx";
-import type { Action } from "./index.js";
-import { isWindows } from "../util/constants.js";
-import { confirm } from "../util/flow.js";
+import type { Action } from "../index.js";
+import { isWindows } from "../../util/constants.js";
+import { confirm } from "../../util/flow.js";
 const commonProhibitedSoftware = ["ophcrack", "wireshark"];
 
 export async function run() {
-	if (!isWindows) return true;
 	for (const p of commonProhibitedSoftware) {
 		const { exitCode } = await $`dpkg-query -s -- ${p}`
 			.nothrow()

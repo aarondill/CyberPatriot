@@ -45,8 +45,17 @@ async function getUsersInGroup(group: string | number) {
 	});
 }
 
+async function getPermittedUsers(): Promise<string[]> {
+	// TODO: get the list of permitted users/admins
+	// Do we scrape the readme URL?
+	// Ask for a file input?
+	// Ask for arguments (that's a lot!)
+	void (await Promise.resolve()); // noop
+	throw new Error("Unimplemented!");
+	// return [""];
+}
+
 export async function run() {
-	if (isWindows) return true;
 	for await (const [username, uid] of getNonSystemUsers()) {
 		// TODO: Compare with user-provided list (scrape the URL?)
 		// TODO: remove unaurthorized users (with confirmation)

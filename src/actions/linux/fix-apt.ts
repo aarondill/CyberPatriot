@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { $, echo, which } from "zx";
-import type { Action } from "./index.js";
+import type { Action } from "../index.js";
 import {
 	error,
 	isProcessOutput,
@@ -8,7 +8,7 @@ import {
 	useRoot,
 	backup,
 	mapFile,
-} from "../util/index.js";
+} from "../../util/index.js";
 
 // NOTE: because euid is changed, not uid, child processes are spawned as root!
 
@@ -27,7 +27,6 @@ async function updateApt(apt: string) {
 // TODO: make this work with debian
 const repoRegex = /^(#%s*)?deb https?:\/\/.*\.ubuntu\.com\/ubuntu /;
 async function fixApt() {
-	if (isWindows) return true; // on windows this is a noop
 	const apt = await which("apt", { nothrow: true });
 	if (!apt) return error("Could not find apt!");
 
