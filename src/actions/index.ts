@@ -7,20 +7,23 @@ export type ActionRet = boolean | undefined | null | void;
  * Otherwise, the function was successful.
  */
 export type Action = (argv: string[]) => Promise<ActionRet> | ActionRet;
+// This type is only permitted in index.js files (they may include only export importChildren)
+export type ActionModuleIndexJS = {
+	importChildren: boolean;
+};
+export type ActionModuleOthers = {
+	default: Action;
+	description?: string;
+	// Note: only for index.js files. Ignored elsewhere.
+	importChildren?: boolean;
+};
+export type ActionModule = ActionModuleIndexJS | ActionModuleOthers;
 
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileExists, warn } from "../util/index.js";
-
-function assertDynamicImport(
-	module: unknown
-): asserts module is Record<string, unknown> {
-	if (module && typeof module === "object") return;
-	throw new Error(
-		"Import returned falsy or non-object. This should be impossible. Is there a then() method?"
-	);
-}
+import { assertDynamicImport, fileExists, warn } from "../util/index.js";
+import { assert, is, typeGuard } from "tsafe";
 
 // Returns a string that can be used to import() actions
 // thisfile is used for recursive imports
@@ -42,9 +45,9 @@ export async function* getActionList(
 				// Check if it's a directory, if so return ./actions/dir/index.js
 				const index = path.join(filepath, "index.js");
 				if (!(await fileExists(index))) continue;
-				const indexMod = (await import(index)) as unknown;
-				assertDynamicImport(indexMod);
-				if (indexMod.importChildren === true) yield* getActionList(filepath);
+				const indexMod = await importAction(index, true);
+				if (indexMod && indexMod.importChildren === true)
+					yield* getActionList(filepath);
 				yield index;
 			}
 			// Not a file or directory. move on.
@@ -59,26 +62,74 @@ export async function* getActionList(
 	}
 }
 
-// Note: this uses `as Action`. There's no way to properly check the return type
-async function importAction(filepath: string): Promise<Action | false> {
+function importAction(
+	filepath: string,
+	indexJS: true
+): Promise<ActionModuleIndexJS>;
+function importAction(
+	filepath: string,
+	indexJS?: false
+): Promise<ActionModuleOthers | null>;
+function importAction(
+	filepath: string,
+	indexJS: boolean
+): Promise<ActionModule | null>;
+
+// Note: this uses `as Action`. There's no way to properly check the return type of a function
+async function importAction(
+	filepath: string,
+	// ie. importChildren
+	onlyCheckIndexJSRequiredTypes?: boolean
+): Promise<ActionModule | null> {
 	const actionModule = (await import(filepath)) as unknown;
 	assertDynamicImport(actionModule);
-	if (!("default" in actionModule)) return false; // skip -- no default export
-	const action = actionModule.default;
-	if (typeof action !== "function") {
-		const msg = `Skipping import action "${filepath}" because the default export is not a function.`;
-		return warn(msg); // skip
+	const defaultExport = actionModule.default;
+	let { importChildren, description } = actionModule;
+
+	if (typeof importChildren !== "boolean") {
+		warn(
+			`action "${filepath}" contains an invalid export importChildren=${String(
+				importChildren
+			)}`
+		);
+		importChildren = false; // set to false if invalid
+		assert(is<false>(importChildren));
 	}
-	// Don't use Function, but there's nothing else I can infer here.
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	return action satisfies Function as Action;
+
+	if (onlyCheckIndexJSRequiredTypes) {
+		return {
+			importChildren: importChildren,
+		} satisfies ActionModuleIndexJS;
+	}
+
+	if (!typeGuard<Action>(defaultExport, typeof defaultExport === "function")) {
+		const msg = `Skipping import action "${filepath}" because default export is not a function.`;
+		warn(msg); // skip
+		return null;
+	}
+
+	if (description !== undefined && typeof description !== "string") {
+		warn(`action "${filepath}" contains an invalid description type."`);
+		description = undefined;
+		assert(is<undefined>(description));
+	}
+
+	return {
+		// Note: this can't be guarenteed because we can't check the return type.
+		default: defaultExport,
+		importChildren: importChildren,
+		description: description,
+	} satisfies ActionModuleOthers;
 }
 
 export async function runActions(args: string[]): Promise<boolean> {
 	for await (const filepath of getActionList()) {
 		const action = await importAction(filepath);
 		if (!action) continue;
-		const suc = await action(args);
+
+		if (action.description)
+			console.log(`Running action: ${action.description}`);
+		const suc = await action.default(args);
 		if (suc === false) return false;
 	}
 	return true;
