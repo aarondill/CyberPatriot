@@ -196,7 +196,13 @@ const tsRules = {
 			allowTernary: true,
 		},
 	],
-	"@typescript-eslint/no-unused-vars": "warn",
+	"@typescript-eslint/no-unused-vars": [
+		"warn",
+		{
+			varsIgnorePattern: "^_",
+			argsIgnorePattern: "^_",
+		},
+	],
 	"@typescript-eslint/no-use-before-define": [
 		"warn",
 		{
