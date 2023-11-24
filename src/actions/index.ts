@@ -127,8 +127,7 @@ export async function runActions(args: string[]): Promise<boolean> {
 		const action = await importAction(filepath);
 		if (!action) continue;
 
-		if (action.description)
-			console.log(`Running action: ${action.description}`);
+		console.log(`Running action: ${action.description ?? filepath}`);
 		const suc = await action.default(args);
 		if (suc === false) return false;
 	}
