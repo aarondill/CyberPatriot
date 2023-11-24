@@ -6,4 +6,5 @@ export function run() {
 	return true;
 }
 
+export const description = `An unimplemented action at ${__filename}.`;
 export default run satisfies Action;

@@ -17,4 +17,5 @@ export async function run() {
 	return true;
 }
 
+export const description = `Purge commonly prohibited software.`;
 export default run satisfies Action;

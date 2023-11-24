@@ -1,8 +1,7 @@
-import { isWindows } from "../util/constants.js";
-import type { YeildValueFunction } from "../util/generator.js";
-import { createGeneratorFromCallback } from "../util/generator.js";
-import { openFile } from "../util/index.js";
-import type { Action } from "./index.js";
+import type { YeildValueFunction } from "../../util/generator.js";
+import { createGeneratorFromCallback } from "../../util/generator.js";
+import { openFile } from "../../util/index.js";
+import type { Action } from "../index.js";
 import type { FileHandle } from "fs/promises";
 
 // for await (const [username, uid] of getNonSystemUsers())
@@ -56,11 +55,14 @@ async function getPermittedUsers(): Promise<string[]> {
 }
 
 export async function run() {
+	void getPermittedUsers;
+	console.log("Getting the list of non-system users...");
 	for await (const [username, uid] of getNonSystemUsers()) {
 		// TODO: Compare with user-provided list (scrape the URL?)
-		// TODO: remove unaurthorized users (with confirmation)
+		// TODO: remove unauthorized users (with confirmation)
 		console.log(username, uid);
 	}
+	console.log("Getting the list of sudo users...");
 	const sudoers = await getUsersInGroup("sudo");
 	for (const username of sudoers ?? []) {
 		// TODO: Compare with user list
@@ -68,4 +70,5 @@ export async function run() {
 	}
 }
 
+export const description = `Remove unauthorized users from the system and manage administrators`;
 export default run satisfies Action;

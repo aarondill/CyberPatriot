@@ -56,5 +56,6 @@ async function fixApt() {
 	return await updateApt(apt);
 }
 
+export const description = "Fix apt sources and update the system";
 export const run = fixApt satisfies Action;
 export default fixApt satisfies Action;
