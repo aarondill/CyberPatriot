@@ -1,7 +1,7 @@
 import { parse } from "node-html-parser";
 import { assert } from "tsafe";
 
-type AdminUser = { name: string; password: string };
+type AdminUser = { username: string; password: string };
 type Users = {
 	admin: AdminUser[];
 	regular: string[];
@@ -31,7 +31,7 @@ function parseUsers(lines: readonly string[]): Users {
 		if (line.startsWith("password:")) {
 			assert(curAdmin, "Found a password line before an admin username line");
 			res.admin.push({
-				name: curAdmin,
+				username: curAdmin,
 				password: line.slice(line.indexOf(":") + 1).trim(),
 			}); // add to admins
 		} else {
@@ -49,7 +49,7 @@ function parseUsers(lines: readonly string[]): Users {
 
 	res.regular.sort((a, b) => a.localeCompare(b));
 	res.all.sort((a, b) => a.localeCompare(b));
-	res.admin.sort((a, b) => a.name.localeCompare(b.name));
+	res.admin.sort((a, b) => a.username.localeCompare(b.username));
 
 	return res;
 }
