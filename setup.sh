@@ -32,7 +32,8 @@ if ! has_cmd n; then
     has_cmd $cmd || continue
     log "Using $cmd"
     "$cmd" install n
-    break
+    # Success! stop!
+    if has_cmd n; then break; fi
   done
 fi
 
