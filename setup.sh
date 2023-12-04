@@ -36,11 +36,17 @@ if ! has_cmd n; then
   done
 fi
 
-if ! has_cmd n; then
-  log "Could not find n! Please install n or a package manager!" >&2
-  exit 1
+n=$(command -v n 2>/dev/null || true)
+args=(latest)
+if [ -x "$n" ]; then
+  log "Setting up node using $n!"
+  sudo "$n" "${args[@]}"
+  exit
 fi
 
-log "Setting up node using n!"
-n=$(command -v n)
-sudo "$n" latest
+log "Could not find n! Using curl to run n from github!"
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+curl -fsSL "https://raw.githubusercontent.com/tj/n/master/bin/n" -o "$tmp"
+bash -- "$tmp" "${args[@]}"
+rm "$tmp"
