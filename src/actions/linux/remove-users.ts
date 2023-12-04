@@ -1,10 +1,11 @@
-import { question } from "zx";
+import { $, question } from "zx";
 import type { YeildValueFunction } from "../../util/generator.js";
 import { createGeneratorFromCallback } from "../../util/generator.js";
-import { openFile } from "../../util/index.js";
+import { confirm, openFile } from "../../util/index.js";
 import type { Action } from "../index.js";
 import type { FileHandle } from "fs/promises";
 import { getUsersFromURL } from "../../util/users.js";
+import { warn } from "console";
 
 // for await (const [username, uid] of getNonSystemUsers())
 type Info = [string, number];
@@ -50,18 +51,35 @@ export async function run() {
 	const url = await question("What is the url of the readme? ");
 	if (!url) return true;
 	const permittedUsers = await getUsersFromURL(url);
-	void permittedUsers; // TODO: THIS!
+
 	console.log("Getting the list of non-system users...");
-	for await (const [username, uid] of getNonSystemUsers()) {
-		// TODO: Compare with user-provided list (scrape the URL?)
-		// TODO: remove unauthorized users (with confirmation)
-		console.log(username, uid);
+	const foundUsers: string[] = [];
+	for await (const [username, _uid] of getNonSystemUsers()) {
+		foundUsers.push(username);
+		if (permittedUsers.all.includes(username)) continue; // This is a permitted user
+		if (!(await confirm(`remove ${username}`, true))) continue;
+		const { exitCode } = await $`userdel -r -- ${username}`.nothrow();
+		if (exitCode !== 0) warn("Command failed!");
 	}
+
+	console.log("Getting the list of missing users...");
+	const missingUsers = permittedUsers.all.filter(x => !foundUsers.includes(x));
+	for (const username of missingUsers) {
+		if (!(await confirm(`add ${username}`, true))) continue;
+		const { exitCode } =
+			await $`useradd -m -s /bin/bash -- ${username}`.nothrow();
+		if (exitCode !== 0) warn("Command failed!");
+	}
+
 	console.log("Getting the list of sudo users...");
 	const sudoers = await getUsersInGroup("sudo");
 	for (const username of sudoers ?? []) {
-		// TODO: Compare with user list
-		console.log(username);
+		if (permittedUsers.admin.find(u => u.name === username)) continue; // This is a permitted user
+
+		if (!(await confirm(`remove ${username} from sudo group?`, true))) continue;
+
+		const { exitCode } = await $`deluser ${username} sudo`.nothrow();
+		if (exitCode !== 0) warn("Command failed!");
 	}
 }
 
