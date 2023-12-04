@@ -76,7 +76,7 @@ export async function run() {
 	for (const username of sudoers ?? []) {
 		if (permittedUsers.admin.find(u => u.name === username)) continue; // This is a permitted user
 
-		if (!(await confirm(`remove ${username} from sudo group?`, true))) continue;
+		if (!(await confirm(`remove ${username} from sudo group`, true))) continue;
 
 		const { exitCode } = await $`deluser ${username} sudo`.nothrow();
 		if (exitCode !== 0) warn("Command failed!");
