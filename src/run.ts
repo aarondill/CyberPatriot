@@ -1,4 +1,4 @@
-#!/usr/bin/env zx
+#!/usr/bin/env node
 // {{{1
 // HACK: Mark chdir as deprecated, since it won't work with zx
 declare global {
