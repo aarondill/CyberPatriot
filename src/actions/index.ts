@@ -22,8 +22,15 @@ export type ActionModule = ActionModuleIndexJS | ActionModuleOthers;
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { assertDynamicImport, fileExists, warn } from "../util/index.js";
+import {
+	assertDynamicImport,
+	colors,
+	confirm,
+	fileExists,
+	warn,
+} from "../util/index.js";
 import { assert, is, typeGuard } from "tsafe";
+import { chalk } from "zx";
 
 // Returns a string that can be used to import() actions
 // thisfile is used for recursive imports
@@ -126,11 +133,13 @@ export async function runActions(args: string[]): Promise<boolean> {
 	for await (const filepath of getActionList()) {
 		const action = await importAction(filepath);
 		if (!action) continue;
+		const msg = `run action '${action.description ?? filepath}'`;
+		if (!(await confirm(msg))) continue;
 
-		console.log(`Running action: ${action.description ?? filepath}`);
 		const suc = await action.default(args);
 		if (suc === false) return false;
 	}
+	console.log(colors(chalk.bold.green, "All actions completed successfully."));
 	return true;
 }
 // This should be considered an action
