@@ -73,12 +73,24 @@ export async function run() {
 
 	console.log("Getting the list of sudo users...");
 	const sudoers = await getUsersInGroup("sudo");
-	for (const username of sudoers ?? []) {
-		if (permittedUsers.admin.find(u => u.name === username)) continue; // This is a permitted user
+	if (!sudoers) return warn("Could not find sudoers");
+	for (const username of sudoers) {
+		if (permittedUsers.admin.find(u => u.username === username)) continue; // This is a permitted user
 
 		if (!(await confirm(`remove ${username} from sudo group`, true))) continue;
 
 		const { exitCode } = await $`deluser ${username} sudo`.nothrow();
+		if (exitCode !== 0) warn("Command failed!");
+	}
+
+	console.log("Getting list of missing admin users...");
+	const missingAdmins = permittedUsers.admin.filter(
+		u => !sudoers.includes(u.username)
+	);
+	for (const { username } of missingAdmins) {
+		if (!(await confirm(`add ${username} to sudo group`, true))) continue;
+
+		const { exitCode } = await $`usermod -a -G sudo -- ${username}`.nothrow();
 		if (exitCode !== 0) warn("Command failed!");
 	}
 }
