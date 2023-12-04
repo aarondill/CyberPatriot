@@ -55,7 +55,9 @@ export async function* getActionList(
 				const indexMod = await importAction(index, true);
 				if (indexMod && indexMod.importChildren === true)
 					yield* getActionList(filepath);
-				yield index;
+				// Check that the index.js file exports a function before yeilding it
+				if ("default" in indexMod && typeof indexMod.default === "function")
+					yield index;
 			}
 			// Not a file or directory. move on.
 			if (!next.isFile()) continue;
@@ -93,9 +95,10 @@ async function importAction(
 	const defaultExport = actionModule.default;
 	let { importChildren, description } = actionModule;
 
+	if (!importChildren) importChildren = false; // undefined and any falsey values are false
 	if (typeof importChildren !== "boolean") {
 		warn(
-			`action "${filepath}" contains an invalid export importChildren=${String(
+			`Action "${filepath}" contains an invalid export importChildren=${String(
 				importChildren
 			)}`
 		);
@@ -116,7 +119,7 @@ async function importAction(
 	}
 
 	if (description !== undefined && typeof description !== "string") {
-		warn(`action "${filepath}" contains an invalid description type."`);
+		warn(`Action "${filepath}" contains an invalid description type."`);
 		description = undefined;
 		assert(is<undefined>(description));
 	}
