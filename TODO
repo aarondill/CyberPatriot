@@ -1,6 +1,5 @@
 <!-- vim:set ft=markdown: -->
-- get the list of permitted users/admins
-  - Use this list!
+- Test remove-users.ts
 - Make apt/sources.list work on Debian too
   - Check different repo urls (allow any?)
 - Test on windows!
