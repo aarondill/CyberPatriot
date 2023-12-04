@@ -4,7 +4,6 @@ import type { Action } from "../index.js";
 import {
 	error,
 	isProcessOutput,
-	isWindows,
 	useRoot,
 	backup,
 	mapFile,

@@ -3,7 +3,7 @@ import os from "node:os";
 import { fs as fsExtra } from "zx";
 import fs from "node:fs/promises";
 import { createWriteStream } from "node:fs";
-import { fileExists, openFile, warn } from "./index.js";
+import { fileExists, warn } from "./index.js";
 import { once } from "node:events";
 
 export const BACKUP_DIR = path.join(os.userInfo().homedir, "file-backups");
