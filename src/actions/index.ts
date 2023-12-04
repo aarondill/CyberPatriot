@@ -40,34 +40,30 @@ export async function* getActionList(
 ): AsyncGenerator<string> {
 	thisfile ??= path.resolve(fileURLToPath(import.meta.url)); // default is the file this is defined in
 	const base = path.dirname(thisfile);
-	let dir;
-	try {
-		dir = await fs.opendir(base);
-		// This will close the dir automagically
-		for await (const next of dir) {
-			const filepath = path.join(base, next.name);
-			if (filepath === thisfile) continue; // No recursive import!
+	const dir = await fs.opendir(base);
+	// This will close the dir automagically
+	for await (const next of dir) {
+		const filepath = path.join(base, next.name);
+		// Note: thisfile is the current index.js file executing. This should never be an issue because you can't have multiple index.js files in the same directory.
+		if (filepath === thisfile) continue; // No recursive import!
 
-			if (next.isDirectory()) {
-				// Check if it's a directory, if so return ./actions/dir/index.js
-				const index = path.join(filepath, "index.js");
-				if (!(await fileExists(index))) continue;
-				const indexMod = await importAction(index, true);
-				if (indexMod && indexMod.importChildren === true)
-					yield* getActionList(filepath);
-				// Check that the index.js file exports a function before yeilding it
-				if ("default" in indexMod && typeof indexMod.default === "function")
-					yield index;
-			}
-			// Not a file or directory. move on.
-			if (!next.isFile()) continue;
-			// Not a .js file. move on.
-			if (path.extname(filepath) !== ".js") continue;
-			// return ./actions/file.js
-			yield filepath;
+		if (next.isDirectory()) {
+			// Check if it's a directory, if so return ./actions/dir/index.js
+			const index = path.join(filepath, "index.js");
+			if (!(await fileExists(index))) continue;
+			const indexMod = await importAction(index, true);
+			if (indexMod && indexMod.importChildren === true)
+				yield* getActionList(index);
+			// Check that the index.js file exports a function before yeilding it
+			if ("default" in indexMod && typeof indexMod.default === "function")
+				yield index;
 		}
-	} finally {
-		await dir?.close();
+		// Not a file or directory. move on.
+		if (!next.isFile()) continue;
+		// Not a .js file. move on.
+		if (path.extname(filepath) !== ".js") continue;
+		// return ./actions/file.js
+		yield filepath;
 	}
 }
 
@@ -146,4 +142,4 @@ export async function runActions(args: string[]): Promise<boolean> {
 	return true;
 }
 // This should be considered an action
-runActions satisfies Action;
+void (runActions satisfies Action);
