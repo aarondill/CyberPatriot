@@ -8,6 +8,7 @@ export async function confirm(
 	const i = +!defaultResponse; // 0 or 1 -- Index of the default response
 	shortOptions[i] = shortOptions[i].toUpperCase();
 
+	if (what.trimEnd().endsWith("?")) what = what.trimEnd().slice(0, -1);
 	const msg = `Do you want to ${what}? (${shortOptions.join("/")}) `;
 	const res = await question(msg, {
 		choices: choices.concat(choices.map(s => s.toUpperCase())),
