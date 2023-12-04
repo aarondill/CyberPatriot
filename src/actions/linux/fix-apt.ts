@@ -7,12 +7,13 @@ import {
 	useRoot,
 	backup,
 	mapFile,
+	confirm,
 } from "../../util/index.js";
 
 // NOTE: because euid is changed, not uid, child processes are spawned as root!
 
 async function updateApt(apt: string) {
-	echo("Running apt update");
+	if (!(await confirm("update the system (apt)", true))) return true;
 	try {
 		await $`${apt} update`;
 		await $`${apt} upgrade`;
