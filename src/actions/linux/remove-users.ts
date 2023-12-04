@@ -1,8 +1,10 @@
+import { question } from "zx";
 import type { YeildValueFunction } from "../../util/generator.js";
 import { createGeneratorFromCallback } from "../../util/generator.js";
 import { openFile } from "../../util/index.js";
 import type { Action } from "../index.js";
 import type { FileHandle } from "fs/promises";
+import { getUsersFromURL } from "../../util/users.js";
 
 // for await (const [username, uid] of getNonSystemUsers())
 type Info = [string, number];
@@ -44,18 +46,11 @@ async function getUsersInGroup(group: string | number) {
 	});
 }
 
-async function getPermittedUsers(): Promise<string[]> {
-	// TODO: get the list of permitted users/admins
-	// Do we scrape the readme URL?
-	// Ask for a file input?
-	// Ask for arguments (that's a lot!)
-	void (await Promise.resolve()); // noop
-	throw new Error("Unimplemented!");
-	// return [""];
-}
-
 export async function run() {
-	void getPermittedUsers;
+	const url = await question("What is the url of the readme? ");
+	if (!url) return true;
+	const permittedUsers = await getUsersFromURL(url);
+	void permittedUsers; // TODO: THIS!
 	console.log("Getting the list of non-system users...");
 	for await (const [username, uid] of getNonSystemUsers()) {
 		// TODO: Compare with user-provided list (scrape the URL?)
