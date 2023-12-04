@@ -24,6 +24,7 @@ async function _getNonSystemUsers(
 	}
 }
 
+// TODO: This is only returning the first???
 function getNonSystemUsers() {
 	return createGeneratorFromCallback((yeildVal: YeildValueFunction<Info>) =>
 		openFile("/etc/passwd", "r", _getNonSystemUsers, yeildVal)
