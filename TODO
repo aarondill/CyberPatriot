@@ -1,7 +1,4 @@
 <!-- vim:set ft=markdown: -->
-- Test remove-users.ts
-  - Add missing admins
-  - Is only getting first non-system user??
 - Make apt/sources.list work on Debian too
   - Check different repo urls (allow any?)
 - Test on windows!
