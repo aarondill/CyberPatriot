@@ -3,11 +3,13 @@ import os from "node:os";
 import { fs as fsExtra } from "zx";
 import fs from "node:fs/promises";
 import { createWriteStream } from "node:fs";
-import { fileExists, warn } from "./index.js";
+import { fileExists, getHome, warn } from "./index.js";
 import { once } from "node:events";
 
-export const BACKUP_DIR = path.join(os.userInfo().homedir, "file-backups");
 async function ensureBackupDirectory() {
+	const home = getHome();
+
+	const BACKUP_DIR = path.join(home, "file-backups");
 	await fs.mkdir(BACKUP_DIR, { recursive: true });
 	return BACKUP_DIR;
 }
