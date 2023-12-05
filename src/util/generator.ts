@@ -43,6 +43,7 @@ export async function* createGeneratorFromCallback<
 	while (!done) {
 		yield _value; // yeild the value promise
 		_resolveYeild(); // mark the yeild promise as used -- allow _value to be changed in yeildVal
+		await _yeild; // allow yeildVal a chance to change _value
 	}
 	return await res;
 }
