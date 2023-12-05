@@ -12,3 +12,4 @@ assert<Extends<typeof import("./fix-apt.js"), ActionModule>>();
 assert<Extends<typeof import("./automatic-updates.js"), ActionModule>>();
 assert<Extends<typeof import("./remove-software.js"), ActionModule>>();
 assert<Extends<typeof import("./remove-users.js"), ActionModule>>();
+assert<Extends<typeof import("./copy-rcfiles.js"), ActionModule>>();
