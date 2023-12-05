@@ -1,34 +1,22 @@
 import { $, question } from "zx";
-import type { YeildValueFunction } from "../../util/generator.js";
-import { createGeneratorFromCallback } from "../../util/generator.js";
+import fs from "node:fs/promises";
 import { confirm, openFile } from "../../util/index.js";
 import type { Action } from "../index.js";
-import type { FileHandle } from "fs/promises";
 import { getUsersFromURL } from "../../util/users.js";
 import { warn } from "console";
 
 // for await (const [username, uid] of getNonSystemUsers())
-type Info = [string, number];
-async function _getNonSystemUsers(
-	fd: FileHandle,
-	yeildVal: YeildValueFunction<Info>
-) {
+async function* getNonSystemUsers(): AsyncGenerator<[string, number]> {
 	// awk -F: '($3>=1000)&&($3<60000)&&($1!="nobody"){print $1}' /etc/passwd
-	for await (const line of fd.readLines()) {
+	const fd = await fs.open("/etc/passwd", "r");
+	for await (const line of fd.readLines({ autoClose: true })) {
 		const [username, , uidString] = line.split(":");
 		const uid = +uidString;
 		if (uid < 1000) continue; // System users
 		if (uid >= 60000) continue; /// System users
 		if (username === "nobody") continue; // nobody is sometimes in a weird uid
-		await yeildVal([username, uid]);
+		yield [username, uid];
 	}
-}
-
-// TODO: This is only returning the first???
-function getNonSystemUsers() {
-	return createGeneratorFromCallback((yeildVal: YeildValueFunction<Info>) =>
-		openFile("/etc/passwd", "r", _getNonSystemUsers, yeildVal)
-	);
 }
 
 async function getUsersInGroup(group: string | number) {

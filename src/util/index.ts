@@ -4,7 +4,6 @@ export * from "./vm.js";
 export * from "./constants.js";
 export * from "./backup.js";
 export * from "./root.js";
-export * from "./generator.js";
 export * from "./types.js";
 
 import { spawn, type SpawnOptions } from "node:child_process";
