@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euC -o pipefail
-MIN_NODE_MAJOR=18
+MIN_NODE_MAJOR=19
 path_contains() {
   case ":$PATH:" in
   *":${1:-}:"*) return 0 ;;
