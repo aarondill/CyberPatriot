@@ -37,19 +37,15 @@ async function getUsersInGroup(group: string | number) {
 }
 
 export async function run() {
-	let readmeURL;
+	let url;
 	do {
-		if (readmeURL)
-			// use result variable as a state to check if we've already looped.
+		// use result variable as a state to check if we've already looped.
+		if (url)
 			console.warn("Invalid URL, please check your spelling and try again.");
-		const url = await question(
-			"What is the url of the readme (empty to abort)? "
-		);
+		url = await question("What is the url of the readme (empty to abort)? ");
 		if (!url) return true;
-		// Allow skipping protocol. Assume https if not specified.
-		readmeURL = url.includes("://") ? url : "https://" + url;
-	} while (!URL.canParse(readmeURL));
-	const permittedUsers = await getUsersFromURL(readmeURL);
+	} while (!URL.canParse(url));
+	const permittedUsers = await getUsersFromURL(url);
 
 	console.log("Getting the list of non-system users...");
 	const foundUsers: string[] = [];
