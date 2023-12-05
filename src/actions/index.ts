@@ -40,9 +40,10 @@ export async function* getActionList(
 ): AsyncGenerator<string> {
 	thisfile ??= path.resolve(fileURLToPath(import.meta.url)); // default is the file this is defined in
 	const base = path.dirname(thisfile);
-	const dir = await fs.opendir(base);
-	// This will close the dir automagically
-	for await (const next of dir) {
+	const dir = await fs.readdir(base, { withFileTypes: true });
+	dir.sort((a, b) => a.name.localeCompare(b.name)); // sort lexagraphically. This is only to ensure consistent ording for the user.
+
+	for (const next of dir) {
 		const filepath = path.join(base, next.name);
 		// Note: thisfile is the current index.js file executing. This should never be an issue because you can't have multiple index.js files in the same directory.
 		if (filepath === thisfile) continue; // No recursive import!
