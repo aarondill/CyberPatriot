@@ -31,8 +31,14 @@ export function getHome() {
 	if (cachedHome) return cachedHome;
 	const { homedir } = os.userInfo(); // use userInfo instead of os.homedir because sudo will set the HOME variable.
 	const prevUID = process.geteuid?.();
-	// windows or we are already non-root. Don't change the euid.
-	if (!process.geteuid || !process.seteuid || !prevUID || euid === prevUID) {
+	if (
+		// windows
+		!process.geteuid ||
+		!process.seteuid ||
+		prevUID === undefined ||
+		// we are already non-root. Don't change the euid.
+		euid === prevUID
+	) {
 		cachedHome = homedir;
 		return homedir;
 	}
