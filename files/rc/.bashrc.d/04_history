@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+if [ -z "${HISTFILE+defined}" ] || [ -n "$HISTFILE" ]; then # not-defined, or defined with a non-null value
+  # bash_history
+  export HISTFILE="${XDG_STATE_HOME:-$HOME/.local/state}/${SHELL##*/}_history"
+  PROMPT_COMMAND+=("history -a")
+fi
+# Empty = unlimited
+export HISTSIZE=
+export HISTFILESIZE=
+# don't put duplicate lines or lines starting with space in the history.
+export HISTCONTROL="ignorespace:ignoredups"
+# append to the history file, don't overwrite it
+shopt -s histappend

@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/30_functions/fp
+#
+# Sets up fp function for fuzzy finding files, and
+# fpd function to fuzzy find directories. Each command displays a
+# preview through bat/cat and tree/ls respectively.
+#
+# Also sets default fzf command for direct invocations
+#
+# By default is colorized, but can be disabled by unsetting FZF_USE_COLOR
+# Important: Also unset FZF_DEFAULT_OPTS to accelerate scanning!
+#
+
+# only do these if fzf exists
+if ! command -v fzf &>/dev/null; then
+  return
+fi
+# Allow color, slows down scanning!
+export FZF_USE_COLOR=true
+export FZF_DEFAULT_OPTS='--ansi'
+
+# Use better find if installed
+if command -v fd &>/dev/null; then
+  # Echo if FZF_USE_COLOR is set
+  function FZF_BASE_COMMAND() { fd --follow --hidden --exclude .git "$@"; }
+  function FZF_FIND_DIR() {
+    FZF_BASE_COMMAND "$(test "$FZF_USE_COLOR" && printf -- "--color=always")" --type d . "$@"
+  }
+  function FZF_FIND_FILE() {
+    FZF_BASE_COMMAND "$(test "$FZF_USE_COLOR" && printf -- "--color=always")" --type f . "$@"
+  }
+else
+  function FZF_BASE_COMMAND() { find "$@"; }
+  function FZF_FIND_DIR() { FZF_BASE_COMMAND "$@" --type d; }
+  function FZF_FIND_FILE() { FZF_BASE_COMMAND "$@" --type f; }
+fi
+
+# Use better cat if installed
+if command -v bat &>/dev/null; then
+  function FZF_CAT_CMD() {
+    local use_color
+    use_color=$(test "$FZF_USE_COLOR" && printf -- "--color=always")
+    # shellcheck disable=SC2086
+    bat --style=numbers $use_color "$@" | head -n 500
+  }
+  function FZF_CAT_CMD_JSON() { cat - | FZF_CAT_CMD "--language" "JSON" "-"; }
+
+else
+  function FZF_CAT_CMD() { cat -; }
+  function FZF_CAT_CMD_JSON() { cat - | FZF_CAT_CMD; }
+fi
+
+if command -v tree &>/dev/null; then
+  function FZF_DIR_PREVIEW() {
+    local use_color
+    use_color=$(test "$FZF_USE_COLOR" && printf -- "-C")
+    # shellcheck disable=SC2086
+    tree $use_color "$@"
+  }
+else
+  function FZF_DIR_PREVIEW() {
+    local use_color
+    use_color=$(test "$FZF_USE_COLOR" && printf -- "--color=always")
+    # shellcheck disable=SC2086
+    ls $use_color "$@"
+  }
+fi
+
+function FZF_FILE_PREVIEW() {
+  local json
+  # Attempt to prettify json before display
+  # will return false if prettier isn't installed
+  if json=$(prettier --parser json5 <"$1" 2>/dev/null); then
+    printf '%s' "$json" | FZF_CAT_CMD_JSON
+  else
+    FZF_CAT_CMD "$1"
+  fi
+}
+
+# Export the functions for subshell usage (IE, FZF)
+export -f FZF_FIND_DIR FZF_FIND_FILE FZF_CAT_CMD FZF_CAT_CMD_JSON FZF_DIR_PREVIEW FZF_FILE_PREVIEW FZF_BASE_COMMAND
+
+export FZF_DEFAULT_COMMAND="FZF_FIND_FILE ."
+
+fp() (
+  set -eu # subshell
+  args=() done=false
+  for arg; do
+    if [ $done = true ]; then
+      args+=("$arg")
+      continue
+    fi
+    case "$arg" in
+    --help | -h)
+      command cat <<-EOF
+			fp [--disable-color|-C] [PATH...]
+												
+			find files in PATH to output the user's choice
+			Opens editor if stdout is connected to a tty
+EOF
+      return 0
+      ;;
+    --disable-color | -C) unset FZF_USE_COLOR FZF_DEFAULT_OPTS ;;
+    --) done=true ;;
+    -*) printf '%s\n' "Invalid option -- $arg" && return 1 ;;
+    *) args+=("$arg") ;;
+    esac
+  done
+
+  if [ ${#args[@]} -eq 0 ]; then
+    FZF_DEFAULT_COMMAND="FZF_FIND_FILE ."
+  else
+    FZF_DEFAULT_COMMAND="FZF_FIND_FILE $(printf '"%s" ' "$@")"
+  fi
+
+  # Call with the path given, if applicable, and find all files
+  output=$(fzf --preview "FZF_FILE_PREVIEW {} | head -n500")
+  if [[ -t 1 ]] && [[ -n "$output" ]]; then
+    editor "$output"
+  else
+    printf '%s' "$output"
+  fi
+)
+
+# For finding directories
+fpd() (
+  set -eu # subshell
+  args=() done=false
+  for arg; do
+    if [ $done = true ]; then
+      args+=("$arg")
+      continue
+    fi
+    case "$arg" in
+    --help | -h)
+      command cat <<-EOF
+			fpd [--disable-color|-C] [PATH...]
+												
+      find directories in PATH to output the user's choice
+EOF
+      return 0
+      ;;
+    --disable-color | -C) unset FZF_USE_COLOR FZF_DEFAULT_OPTS ;;
+    --) done=true ;;
+    -*) printf '%s\n' "Invalid option -- $arg" && return 1 ;;
+    *) args+=("$arg") ;;
+    esac
+  done
+
+  if [ ${#args[@]} -eq 0 ]; then
+    FZF_DEFAULT_COMMAND="FZF_FIND_DIR ."
+  else
+    FZF_DEFAULT_COMMAND="FZF_FIND_DIR $(printf '"%s" ' "$@")"
+  fi
+
+  # Call with the path given, if applicable, and find all files
+  output=$(fzf --preview "FZF_DIR_PREVIEW {} | head -n500")
+  printf '%s' "$output"
+)

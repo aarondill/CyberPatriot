@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# ~/.bashrc.d/81_rustup-completions
+# Source rustup command to enable completion
+if command -v rustup &>/dev/null; then
+  eval "$(rustup completions bash)"
+  if command -v cargo &>/dev/null; then
+    eval "$(rustup completions bash cargo)"
+  fi
+fi

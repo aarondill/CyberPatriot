@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# This starts up gnome-keyring-daemon/ssh-agent if not already running
+
+if [ -z "$DISPLAY" ] || [ "$(id -u)" -eq 0 ]; then
+  return 0 # Just stop if not running graphically. It won't work right anyways.
+fi
+
+# Incase XDG_RUNTIME_DIR is not set, use ~/.cache
+ENV_FILE="${XDG_RUNTIME_DIR:-$HOME/.cache}/keyring.env"
+function quiet() { "$@" &>/dev/null; }
+
+if [ -x "$(command -v gnome-keyring-daemon)" ]; then
+  if ! quiet pgrep -u "$USER" gnome-keyring-d; then
+    gnome-keyring-daemon --daemonize --components=pkcs11,secrets,ssh,gpg >|"$ENV_FILE" 2>/dev/null
+  fi
+elif [ -x "$(command -v ssh-agent)" ]; then
+  if ! quiet pgrep -u "$USER" ssh-agent; then
+    ssh-agent >|"$ENV_FILE"
+  fi
+fi
+
+if ! [ -f "$SSH_AUTH_SOCK" ] && [ -f "$ENV_FILE" ]; then
+  # shellcheck disable=SC1090 # It's not *really* dynamic, but shellcheck can't follow it.
+  source "$ENV_FILE" >/dev/null
+fi
+export GNOME_KEYRING_CONTROL GNOME_KEYRING_PID GPG_AGENT_INFO SSH_AUTH_SOCK
+
+unset ENV_FILE # Not needed outside this file
+unset -f quiet # Don't leak to the shell

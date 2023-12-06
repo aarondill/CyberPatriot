@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/20_alias
+#
+# Sets up aliases for user usage
+#
+
+# Is a command available?
+function has() { [ -x "$(command -v -- "$1")" ]; }
+
+# I'm stupid and can't remember what to type
+alias quit='exit'
+alias :q='exit'
+alias d='cd'
+# Alias sudo to call sudo with *my* $HOME/ENV/PATH
+# alias sudo="sudo -E env PATH=\"\$PATH\" "
+alias sudo='sudo -E ' # dont use env so permitted commands still work
+# Unrestrict fd by default
+if has fdfind; then
+  alias fd="fdfind -uu"
+else
+  alias fd="fd -uu"
+fi
+alias rg="rg -uu -i"
+alias rd='ripdrag -xr'
+alias rdt='ripdrag -ktr'
+# Show progress pls
+alias dd="dd status=progress"
+# Ask before overwriting
+alias mv="mv -i"
+alias cp="cp -ai"
+alias rm="rm --preserve-root"
+# Save history on exit
+alias poweroff="history -a; /sbin/poweroff"
+alias reboot="history -a; /sbin/reboot"
+alias halt="history -a; /sbin/halt"
+alias shutdown="history -a; /sbin/shutdown"
+# Toggle capslock from terminal (bc capslock key is remapped)
+alias capslock='xdotool key Caps_Lock'
+alias CAPSLOCK='xdotool key Caps_Lock'
+
+if has new; then
+  alias new-java='new -l java'
+fi
+
+# alias backup="~/.backup/dobackup"
+# alias lastbackup="/usr/bin/cat ~/.backup/backup-time"
+
+browsers=(vivaldi vivaldi-stable firefox firefox-esr google-chrome google-chrome-stable)
+for b in "${browsers[@]}"; do
+  # shellcheck disable=SC2139 # These aliases should expand at definition
+  if has "$b"; then
+    alias "${b%-*}=$b" # remove everything after the last dash. browser-version --> browser
+    alias browser="$b"
+    export BROWSER="$b"
+    break
+  fi
+done
+unset browsers b
+
+editors=(nvim vim code)
+for e in "${editors[@]}"; do
+  if has "$e"; then
+    export EDITOR="$e" && break
+  fi
+done
+unset editors e
+if [ -n "${EDITOR:-}" ]; then
+  # shellcheck disable=SC2139
+  alias editor="$EDITOR"
+  export VISUAL="$EDITOR"
+fi
+
+alias fslite='browser fslite.vercel.app'
+# Don't show loopback, and show more useful columns
+alias lsblk="lsblk -e 7 -o NAME,MAJ:MIN,SIZE,FSTYPE,LABEL,MOUNTPOINT"
+exa= && if has eza; then exa=eza; elif has exa; then exa=exa; fi
+if [ -n "$exa" ]; then
+  ls="$exa --color=auto -h --group"
+  if "$exa" --version | grep -qF '[+git]'; then
+    ls+=" --git" # add --git argument if supported
+  else
+    export "${exa^^}_OVERRIDE_GIT=1" # {EXA,EZA}_OVERRIDE_GIT
+  fi
+  case "${TERM,,}" in
+  linux | dumb) ;; # don't show icons in linux terminal.
+  *) ls+=" --icons" ;;
+  esac
+
+  ll="$ls -l"
+  if [ "$exa" = 'eza' ]; then                  # These only work on eza. The rest should be supported for both versions!
+    eza_only="--smart-group --color-scale age" # only show group if group != owner
+    ls+=" $eza_only" ll+=" $eza_only"
+
+    ll+=" -M" # Show mounts (underline) :) Only works with long view and no grid!
+    # ls+=" --no-quotes"                        # no quotes (now) break alignment. See: https://github.com/eza-community/eza/pull/551
+    unset eza_only
+  fi
+
+  # shellcheck disable=SC2139 # I expect it to expand on definition
+  alias ls="$ls --grid"
+  alias la="ls -a"
+  # shellcheck disable=SC2139 # I expect it to expand on definition
+  alias ll="$ll"
+  alias lla="ll -a"
+  alias llaa="ll -aa"
+else
+  alias ls='ls --color=auto -h'
+  alias la="ls -A"
+  alias ll="ls -l"
+  alias lla="ls -lA"
+  alias llaa="ls -la"
+fi
+unset ls ll exa
+
+alias cl='clear'
+alias tree='tree -a' # show hidden
+if has tty-clock; then alias clock='tty-clock  -sScbtrn'; fi
+
+if has n; then alias n='sudo "$(which n)"'; fi
+
+# Show battery information
+alias battery='upower -i $(upower -e | grep BAT)'
+
+if has zip; then
+  # alias for zipping files that should be hidden
+  alias secret-zip='zip -9ruvoe'
+fi
+
+# Replace `cat` with `bat`, if installed
+
+# The path to the bat executable
+bat=
+if has bat; then bat=$(command -v bat); elif has batcat; then bat=$(command -v batcat); fi
+
+if has bat || has batcat; then
+  if ! has bat; then
+    alias bat="batcat"
+  elif ! has batcat; then
+    alias batcat="bat"
+  fi
+  alias cat="bat"
+
+  export MANPAGER="sh -c 'col -bx | \"$bat\" -l man -p'"
+  export MANROFFOPT="-c" # disable color output in man pages
+  # Tests bat version and exits 0 if version is high enough
+  # subshell to avoid leaving behind variables
+  (
+    # 0.21.0 is the latest version where PAGER=bat will cause
+    # recursive forks, thus require greater than this before setting PAGER
+    ExpecV="0.21.0"
+    versions="$(printf '%s\n' "$("$bat" --version | cut -d' ' -f 2)" "$ExpecV")"
+    # shellcheck disable=SC2319 # $? *should* refer to the condition, not the sort command
+    test "$versions" != "$(sort -V <<<"$versions")" || exit "$?"
+  ) && export PAGER="$bat"
+
+fi
+unset bat
+
+if has chezmoi; then
+  alias config='chezmoi'
+  # shellcheck source=../.local/share/bash-completion/completions/config
+  [ -f ~/.local/share/bash-completion/completions/config ] && source ~/.local/share/bash-completion/completions/config
+fi
+
+alias bc="bc --quiet --warn -l"
+# if `bc` is installed set aliases for it
+if has bc; then alias calc="bc"; fi
+
+# if `pnpm` is installed set alias for pnpx
+if has pnpm; then alias pnpx='pnpm dlx'; fi
+
+# If tealdeer is installed set alias for tldr
+if has tldr; then
+  alias tldrf='tldr --list | fzf --preview "tldr {1} --color=always" --preview-window=right,70% | xargs -r tldr --pager'
+fi
+
+# Shorter lazygit
+if has lazygit; then alias lg='lazygit'; fi
+
+# Shorter git
+if has git; then
+  alias g='git'
+  # Reuse git completion if present (overwritten already), else default to directories
+  complete=$(complete -p git 2>/dev/null || printf '%s ' complete -o bashdefault -o default -o nospace -F __git_wrap__git_main git)
+  # remove ' git' and replace with ' g'. Lack of quotes is intentional!
+  if [ -n "$complete" ]; then
+    eval "${complete% git} g"
+  fi
+  # if not defined, just wait till git is used
+  if has __load_completion; then
+    __load_completion git
+  fi
+fi
+
+IBus="org.freedesktop.IBus.session.GNOME.service"
+# If it's enabled in the first place
+if systemctl list-unit-files --quiet --all --type=service --user --state=enabled "$IBus" &>/dev/null; then
+  # shellcheck disable=SC2139 # I exect it to expand now
+  alias restart-ibus="systemctl --user restart '$IBus'"
+fi
+unset IBus
+
+# Don't you DARE open a window
+alias emacs='emacs -nw'
+alias ssh='TERM=xterm-256color ssh'
+
+# Save history to ~/.cache/awesome
+alias awesome-client='RLWRAP_HOME="$HOME/.cache/awesome" awesome-client'
+
+if has 'ffplay'; then
+  alias aplay='ffplay -nodisp -hide_banner -autoexit'
+fi
+
+# Allow nvchad if it's installed
+if [ -d "${NVCHAD_CONFIG:-"${XDG_CONFIG_HOME:-$HOME/.config}/NvChad"}" ]; then
+  alias nvchad='NVIM_APPNAME=NvChad nvim'
+else
+  function nvchad-install() {
+    local DESTINATION="${NVCHAD_CONFIG:-"${XDG_CONFIG_HOME:-$HOME/.config}/NvChad"}"
+    printf '%s\n' "Creating a treeless clone of the nvchad repository in $DESTINATION"
+    git clone --filter=tree:0 "https://github.com/NvChad/NvChad" "$DESTINATION" || {
+      local err=$?
+      printf 'Something went wrong while cloning the nvchad repository!' >&2
+      return "$err"
+    }
+    alias nvchad='NVIM_APPNAME=NvChad nvim'
+    printf '%s\n' 'Please run "nvchad" to complete the installation'
+    unset -f nvchad-install
+  }
+fi
+# https://nvchad.com/
+
+# Don't leak this to the shell
+unset -f has

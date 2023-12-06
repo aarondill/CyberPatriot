@@ -1,0 +1,182 @@
+#! /usr/bin/env bash
+
+# ~/.bashrc.d/60_PS1/00_git
+#
+# Sets up the __git_ps1 command and creates a function
+# '__set_bash_prompt' to append to PROMPT_COMMAND and
+# set the bash prompt with the current git status, if
+# in a git directory. No git message is displayed if
+# PWD is not inside a git working dir or .git folder.
+# Fallbacks exist if git or __git_ps1 aren't accessible
+#
+# Creates 2 seperate PS1 vars, depending on the terminal
+# width: ShortPS1 if < 90 cols, else LongPS1.
+# Supports color detection and removes color if not
+# supported.
+#
+# Example short:
+#    'aaron:~/.cache/ts-template(main)$ '
+# Example long:
+#     '0|09:49|aaron@hostname:~/code/.git(GIT_DIR!)$ '
+#      jobs|time|user@host:PWD(git)$
+# Git Status:
+#   GIT_DIR! : you are inside the .git directory
+#   -branch : you are inside an ignored folder
+#   branch* : you have unstaged changes
+#   branch+ : you have staged changes
+#   branch= : you are caught up with remote
+#   branch[+-]n : you are n commits ahead/behind remote
+#
+if [ "$DISABLE_CUSTOM_PS1" = 1 ]; then return; fi
+
+export GIT_PS1_SHOWDIRTYSTATE=1          # '*'=unstaged, '+'=staged
+export GIT_PS1_SHOWSTASHSTATE=1          # '$'=stashed
+export GIT_PS1_SHOWUNTRACKEDFILES=1      # '%'=untracked
+export GIT_PS1_SHOWUPSTREAM="verbose"    # 'u='=no difference, 'u+1'=ahead by 1 commit
+export GIT_PS1_STATESEPARATOR=''         # No space between branch and index status
+export GIT_PS1_HIDE_IF_PWD_IGNORED=''    # Show even if ignores the current directory
+export GIT_PS1_DESCRIBE_STYLE="describe" # detached HEAD style:
+#  contains      relative to newer annotated tag (v1.6.3.2~35)
+#  branch        relative to newer tag or branch (master~4)
+#  describe      relative to older annotated tag (v1.6.3.1-13-gdd42c2f)
+#  default       exactly matching tag
+
+# Self defined variables that determines the cut-off
+# between the long expresive PS1 and the shorter version
+export GIT_PS1_LONG_LENGTH=90
+
+# Check if we support colors
+function __color_enabled() {
+  local -i colors
+  colors=$(tput colors 2>/dev/null)
+  # shellcheck disable=SC2181
+  [[ $? -eq 0 ]] && [[ $colors -gt 2 ]]
+}
+unset __colorize_prompt && __color_enabled && __colorize_prompt=1
+
+function __set_bash_prompt() {
+  # Desired result:
+  #  Color: ${yellow}jobs${none}|${red}HH:MM|${bGre}USERNAME@HOST${none}:${blue}SHORTPATH${none}(GIT)${red}ERROR${none}$
+  #  White: \j|\D{%I:%M%P}|\u@\h:\w(GIT)\$
+  local exit=${__EXIT:-"$?"} # Save the exit status of the last command
+
+  # PS1 is made from $PreGitPS1 + <git-status> + $PostGitPS1
+
+  # Track if git is installed
+  local git_available=''
+  if { command -v git && git --version; } &>/dev/null; then
+    git_available=1
+  fi
+
+  # Create (GIT: TOP-LEVEL) for titlebar
+  local gitString=""
+  if [[ $git_available ]] && git rev-parse &>/dev/null; then # In git
+    gitString=" (GIT: "
+    if [[ "$(git rev-parse --is-inside-work-tree)" = "true" ]]; then # In work tree
+      gitString+=$(basename -- "$(git rev-parse --show-toplevel 2>/dev/null)")
+    else # In .git
+      gitString+=$(basename -- "$(realpath -- "$(git rev-parse --git-dir)/..")")
+    fi
+    gitString+=")"
+  fi
+
+  # Escapes for setting titlebar
+  local title='\[\e]0;' end='\a\]'
+  # Titlebar
+  local TitleBar="$title\W$gitString: \u$end"
+  unset gitString end title
+
+  # Variables to set depending on $COLUMNS
+  local ShortPS1="\${debian_chroot:+(\$debian_chroot)}" LongPS1="\${debian_chroot:+(\$debian_chroot)}"
+
+  if [[ $__colorize_prompt ]]; then
+    export GIT_PS1_SHOWCOLORHINTS=1
+    # Wrap the color codes between \[ and \], so that
+    # bash counts the correct number of characters for line wrapping:
+    {
+      local Red='\[\e[0;31m\]' BRed='\[\e[1;31m\]' Gre='\[\e[0;32m\]' BGre='\[\e[1;32m\]'
+      local Yel='\[\e[0;33m\]' BYel='\[\e[1;33m\]' Blue='\[\e[0;34m\]' BBlue='\[\e[1;34m\]'
+      local Mag='\[\e[0;35m\]' BMag='\[\e[1;35m\]' Cya='\[\e[0;36m\]' BCya='\[\e[1;36m\]'
+      local Whi='\[\e[0;37m\]' BWhi='\[\e[1;37m\]' None='\[\e[0m\]'
+    }
+  else # No color
+    # unset all the colors so they don't show
+    unset GIT_PS1_SHOWCOLORHINTS
+    # shellcheck disable=SC2034
+    {
+      local Red='' BRed='' Gre='' BGre=''
+      local Yel='' BYel='' Blue='' BBlue=''
+      local Mag='' BMag='' Cya='' BCya=''
+      local Whi='' BWhi='' None=''
+    }
+  fi
+
+  local pipe="${None}|"
+  # Jobs and time
+  LongPS1+="$Yel\j$pipe$BRed\D{%I:%M}$pipe"
+  # Bright color if root
+  if [[ ${EUID} -gt 0 ]]; then
+    LongPS1+="${BGre}"
+    ShortPS1+="${BGre}"
+  else
+    LongPS1+="${BMag}"
+    ShortPS1+="${BMag}"
+  fi
+  # User@Host Colon and path
+  LongPS1+="\u@\h$None:$BBlue\\w$None"
+  ShortPS1+="\u$None:$BBlue\\w$None"
+
+  # Set to LongPS1 if greater than GIT_PS1_LONG_LENGTH, else ShortPS1
+  local PreGitPS1=""
+  if [[ $COLUMNS -gt ${GIT_PS1_LONG_LENGTH:-90} ]]; then
+    PreGitPS1=$TitleBar$LongPS1
+  else
+    PreGitPS1=$TitleBar$ShortPS1
+  fi
+  unset LongPS1 ShortPS1
+
+  # Now build the part after git's status
+  PostGitPS1=""
+
+  # Highlight non-standard exit codes
+  if [[ $exit -ne 0 ]]; then
+    PostGitPS1+="${Red}[$exit]"
+  fi
+
+  # Change color of prompt if root
+  if [[ ${EUID} == 0 ]]; then
+    PostGitPS1+="$BRed"'\$ '
+  else
+    PostGitPS1+="$None"'\$ '
+  fi
+  PostGitPS1+="$None"
+
+  # Prepare __git_ps1 for calling
+
+  # Add - before branch if current directory is ignored
+  local ignored
+  if [[ $git_available ]]; then
+    ignored=$(git check-ignore -q . &>/dev/null && echo -n "${Red}-")
+  fi
+  # Ensure __git_ps1 is accessible, set PS1 and
+  # reset this function if not
+  if ! command -v __git_ps1 &>/dev/null; then
+    PS1=$PreGitPS1$PostGitPS1
+    return
+  fi
+
+  # Set PS1 from $PreGitPS1 + <git-status> + $PostGitPS1
+  __git_ps1 "$PreGitPS1" "$PostGitPS1" "($ignored%s)"
+
+  # defaut Linux Mint 17.2 user prompt:
+  # PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[01;34m\] \w\[\033[00m\] $(__git_ps1 "(%s)") \$ '
+  return "$exit"
+}
+
+# This tells bash to reinterpret PS1 after every command, which we
+# need because __git_ps1 will return different text and colors
+
+# Don't do if contains already
+if ! printf '%s\0' "${PROMPT_COMMAND[@]}" | grep -F -x -z -q -- '__set_bash_prompt'; then
+  PROMPT_COMMAND+=('__set_bash_prompt')
+fi

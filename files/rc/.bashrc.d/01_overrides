@@ -1,0 +1,50 @@
+#! /usr/bin/env bash
+
+# ~/.bashrc.d/01_overrides
+#
+# Overrides to certain system defaults,
+# such as the less history file location,
+#
+# May also be a good place for init scripts
+# If required by other files
+#
+declare -ax PROMPT_COMMAND
+PROMPT_COMMAND=("${PROMPT_COMMAND[@]}")
+
+rm_rf=( # These will be removed forcefully.
+  ~/.dotnet/
+  ~/.pki/                   # RM the stupid files in HOME from chrome
+  ~/.mozilla/firefox{,-esr} # RM the firefox files - I don't even care.
+  ~/.hplip/                 # RM the hplip files - This is just configuration
+  ~/.dbus/                  # RM the dbus files - This is fine.
+  ~/.java/                  # RM the java files - should be in ~/.config/java/
+  ~/.snap/warnings.json     # RM the snap warnings file
+  ~/.BurpSuite/             # RM burp config
+  ~/.gnome/apps/*-BurpSuiteCommunity.desktop
+  ~/.python_history
+  # ~/.vmware/
+)
+# rmdir will happen *after* rm_rf.
+rmdir=( # These will only be removed if empty
+  ~/.snap/
+  ~/.sane/{xsane/,}
+  ~/.gnome/{apps/,}
+  ~/.mozilla/{extensions/,}
+  ~/.gconf/
+  ~/.vmware/
+  ~/tmp/
+  ~/.cups
+)
+function _rm_files() (
+  cd ~ || return # subshell!
+  for f in "${rm_rf[@]}"; do
+    [ -e "$f" ] || [ -L "$f" ] || continue # the file exists? or is a link?
+    rm -rf -- "$f" 2>/dev/null
+  done
+  for f in "${rmdir[@]}"; do
+    [ -e "$f" ] || [ -L "$f" ] || continue # the file exists? or is a link?
+    rmdir -- "$f" 2>/dev/null
+  done
+)
+_rm_files
+unset f rm_rf rmdir _rm_files

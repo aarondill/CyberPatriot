@@ -1,0 +1,13 @@
+#! /usr/bin/env bash
+
+# ~/.bashrc.d/70_shlvl
+#
+# Echos the shell depth to the user if
+# it is greater than one for the sake
+# of easy navigation between levels.
+#
+
+# Print shell level on startup if > 1
+if [[ $SHLVL -gt 1 ]]; then
+  echo Shell level $SHLVL
+fi

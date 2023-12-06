@@ -1,0 +1,58 @@
+# Bashrc Directory
+
+- Files here will be sourced by .bashrc
+- Directories are sourced too!
+- Files starting with an underscore '\_' will not be sourced
+- Files are ordered using the following command:
+  ```bash
+  find ~/.bashrc.d/ -type f -not -name "_*" | sort
+  ```
+- NOTE: PATH and random environment variables should be set in .profile
+
+## Moving files
+
+Moving files here will not break the script, however
+if files are moved, the line containing their path should
+be changed to ensure files don't get lost
+
+## Commenting
+
+- Comments are highly suggested describing each file at the top
+  and throughout to describe particularly cryptic operations
+- Beginning with a \#! is suggested for syntax purposes
+- Including a comment below the she-bang containing the desired
+  path is recomendad to ensure the file is always in the correct
+  location
+
+## Summary of Files (see more at top of each file):
+
+- 00_shellopt
+  - Sets shell options, such as extglob
+- 01_overrides
+  - Overrides environment variables, such as LESSHIST
+- 03_secrets
+  - Anything that needs to be encrypted in the chezmoi repo
+  - Includes API keys
+- 10_util-vars
+  - Useful vars for usage, such as $js
+- 20_alias
+  - Sets aliases for easy shell usage, such as la
+- 30_functions/
+  - A folder containing useful functions
+- 40_fzf
+  - sets up defaults for use of fzf, and ctrl+r, etc
+- 45_neofetch-info
+  - Calls neofetch to display useful information
+- 50_backup
+  - Shows last backup
+  - Sets up backup function
+- 60_PS1/
+  - Folder containing everything needed to set up the PS1
+- 70_shlvl
+  - Echo the shell level if greater than 1
+- 80_chezmoi-functions
+  - Set up override functions to use chezmoi when using vim
+- 999_Prompt-Exit-Code
+  - Preserve the exit code after the prompt command
+- \_README
+  - This file; describes the other files in this directory

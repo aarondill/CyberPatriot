@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/00_shellopt
+#
+# Sets useful shell options, such as
+# globstar(**), extended globs
+# history verify before running (!, !!, !$)
+# noclobber(>|), case insensitive globs
+# failed globs returning ""
+# and alerting on failed background jobs
+#
+
+shopt -s globstar   # Allow ** == all dirs and subdirs
+shopt -s extglob    # Allow !(a|b)*.js
+shopt -s histverify # Change !$ and !! and ! to display command before running
+set -o noclobber    # Avoid accidental overwriting of files with "">/file. instead requires "">|/file
+shopt -s nocaseglob # Allow case insensitive globs
+shopt -s nullglob   # Failed globs == "" not the glob
+set -b              # Display job status at close

@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/30_functions/terminate
+#
+# Creates a `terminate` function
+# that kills a process, nicely at
+# first, then more aggressively
+#
+
+function terminate() {
+  local wait_time=${2:-1} # seconds
+  local signals=(TERM INT QUIT HUP KILL)
+  local signal_qty=${#signals[@]}
+
+  # accepts PID as $1
+  local process=${1:-}
+  if [ -z "$process" ]; then
+    printf '%s\n' 'process is required' >&2
+    return 2
+  fi
+
+  local i=0
+  while ps --pid "$process" &>/dev/null; do
+    signal=${signals[i]}
+    printf "%s\n" "Sending signal '$signal' to process $process"
+    kill "-$signal" "$process"
+    i=$((i + 1))
+    if [ "$i" -ge "$signal_qty" ]; then
+      printf '%s\n' "It won't die!" >&2
+      return 1
+    fi
+    sleep "$wait_time"
+  done
+}

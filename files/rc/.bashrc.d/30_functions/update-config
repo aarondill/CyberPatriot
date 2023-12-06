@@ -1,0 +1,197 @@
+#! /usr/bin/env bash
+
+# ~/.bashrc.d/30_functions/update-config
+#
+# Creates an update-config function to call chezmoi add on
+# every file in _update-config
+# Creates a cproot function to cp a file to ~/.root/FILEPATH
+# and calls chezmoi add on it.
+#
+
+function update-config() (
+  set -eu
+
+  target=$(chezmoi target-path)
+
+  # add from target so files are relative to target
+  cd "$target"
+
+  # Update crontab backup
+  if command -v crontab &>/dev/null; then
+    crontab -l >|~/.config/crontab
+  fi
+
+  # Finds files line-by-line, ignoring the first 3 lines
+  readarray -t lines <<<"$(tail -n+4 -- ~/.bashrc.d/30_functions/_update-config)"
+  files=()
+  dirs=()
+  for file in "${lines[@]}"; do
+    if [ -f "$file" ] || [ -L "$file" ]; then # -L tests for dangling symlink / directory link which should be added as a file
+      files+=("$file")
+    elif [ -d "$file" ]; then
+      dirs+=("$file")
+    else
+      printf '%s\n' "$file is not a file!!" >&2
+    fi
+  done
+  unset lines
+
+  # Output a detail of which files are changing -- sed command to remove the status
+  changed_files=$(chezmoi status -- "${files[@]}" | sed 's/^\s*\S\+\s\(.*\)$/\1/')
+  changed_dirs=$(chezmoi status -- "${dirs[@]}" | sed 's/^\s*\S\+\s\(.*\)$/\1/')
+  if [ -n "$changed_files" ] || [ -n "$changed_dirs" ]; then
+    printf 'Changed files:\n'
+    printf '%s\n' "$changed_files" "$changed_dirs"
+  fi
+
+  # don't force a tty prompt, instead just take my no.
+  yes no | chezmoi add --exact --no-tty -- "${dirs[@]}" >/dev/null
+  yes no | chezmoi add --no-tty -- "${files[@]}" >/dev/null
+
+  # Ensure everything is updated
+  chezmoi re-add
+
+  # Update dconf
+  local dconf_path local_dest=~/.config/dconf/dconf-backup.ini
+  dconf dump / >|"$local_dest"
+  # Save to chezmoi
+  dconf_path=$(chezmoi source-path)/encrypted_dconf-backup.ini
+  if ! cmp -s "$local_dest" <(chezmoi decrypt -- "$dconf_path"); then
+    printf 'Updating dconf backup\n'
+    chezmoi encrypt "$local_dest" -o "$dconf_path"
+    chezmoi git -- add "$dconf_path" &&
+      chezmoi git -- commit --quiet -m 'update dconf-backup.ini' &&
+      chezmoi git -- push --quiet
+  fi
+
+)
+
+# Copies the files to $HOME/.root/FILEPATH. `.root` should be backed up
+function cproot() (
+  declare -i exitCode=0
+  # shellcheck disable=SC2206 # Splitting is intentional.
+  local sudo=(${SUDO:-sudo})
+  [ "$(id -u)" -eq 0 ] && sudo=()
+
+  for file in "$@"; do
+    if ! [ -e "$file" ]; then
+      printf '%s is not a file\n' "$file" >&2
+      # Exit 1 at end if any args were invalid
+      exitCode=1 && continue
+    fi
+    local old_path new_dir new_path
+    old_path="$(realpath -se -- "$file")"
+    new_path="$HOME/.root$old_path"
+    new_dir="$(dirname -- "$new_path")"
+    # ensure destination exists
+    mkdir -p -- "$new_dir"
+    # cp to home, so files are relative to home.
+    "${sudo[@]}" "cp" -rf -T -- "$file" "$new_path"
+    "${sudo[@]}" chown --preserve-root -hR -- "$(whoami)" "$new_path"
+    echo "$new_path"
+  done
+
+  # Exit with the saved code
+  return "$exitCode"
+)
+
+function update-root-config() {
+  local files rootpath homepath dotroot encrypted_files add_files
+  local dotroot_source perms dir
+  # shellcheck disable=SC2206 # Splitting is intentional.
+  local sudo=(${SUDO:-sudo})
+  [ "$(id -u)" -eq 0 ] && sudo=()
+
+  dotroot="$HOME/.root"
+  encrypted_files=()
+  add_files=()
+  add_dirs=()
+  add_exact_dirs=()
+  while IFS= read -r -d $'\0' file; do
+    [ -z "$file" ] && continue
+    rootpath="/$file"
+    homepath="$dotroot/$file"
+    # Hasn't yet been copied to root (or deleted, but that's up to the user), so ignore it.
+    if ! [ -f "$rootpath" ]; then continue; fi
+    # Change permissions to match the root
+    perms=$("${sudo[@]}" chmod --changes --reference="$rootpath" "$homepath")
+    if [ -z "$perms" ] && "${sudo[@]}" cmp --quiet "$rootpath" "$homepath"; then
+      continue # if permissions are same and the contents are same
+    fi
+    # Doesn't need to be recursive bc is only files, not dirs.
+    "${sudo[@]}" "cp" -f -T -- "$rootpath" "$homepath"
+    "${sudo[@]}" chown --preserve-root -h -- "$(whoami)" "$homepath"
+
+    #  Fails if not encrypted
+    if [ -n "$(chezmoi list --include=encrypted -- "$homepath")" ]; then
+      encrypted_files+=("$homepath")
+    else
+      add_files+=("$homepath")
+    fi
+  done < <(find "$dotroot" -type f -printf '%P\0')
+
+  dotroot_source=$(chezmoi source-path -- "$dotroot")
+  while IFS= read -r -d $'\0' dir; do
+    [ -z "$dir" ] && continue
+    rootpath="/$dir"
+    homepath="$dotroot/$dir"
+    # Hasn't yet been copied to root (or deleted, but that's up to the user), so ignore it.
+    if ! [ -d "$rootpath" ]; then continue; fi
+    # Change permissions to match the root
+    perms=$("${sudo[@]}" chmod --changes --reference="$rootpath" "$homepath")
+    if [ -z "$perms" ]; then continue; fi # if permissions are same
+    case "$(chezmoi source-path "$dir")" in
+    "$dotroot_source/exact_$dir") add_exact_dirs+=("$homepath") ;;
+    "$dotroot_source/$dir") add_dirs+=("$homepath") ;;
+    *) echo "Something went wrong processing '$dir'" >&2 ;;
+    esac
+  done < <(find "$dotroot" -type d -printf '%P\0')
+
+  did_something=0
+  function __chezmoi_add() {
+    did_something=1
+    chezmoi add "$@"
+  }
+  test "${#add_files[@]}" -gt 0 && __chezmoi_add -- "${add_files[@]}"
+  test "${#encrypted_files[@]}" -gt 0 && __chezmoi_add --encrypt -- "${encrypted_files[@]}"
+  test "${#add_dirs[@]}" -gt 0 && __chezmoi_add -i dirs --recursive=false -- "${add_dirs[@]}"
+  test "${#add_exact_dirs[@]}" -gt 0 && __chezmoi_add -i dirs --recursive=false --exact -- "${add_exact_dirs[@]}"
+  if [ "$did_something" -eq 0 ]; then printf '%s\n' "No files have changed (dirs aren't recursive)"; fi
+  unset -f __chezmoi_add # remove from env
+  return 0
+}
+
+# Adds to chezmoi and adds to ~/.bashrc.d/30_functions/_update-config
+# Imitates config add (without dash)
+function config-add() {
+  declare -i exitCode=0
+  local file
+  files=()
+  for file in "$@"; do
+    if [ -r "$file" ]; then
+      # add to the array so i can update all at once
+      files+=("$(realpath -s -- "$file")")
+    elif [ -e "$file" ]; then
+      printf '%s\n' "$file is not readable"
+      exitCode=1
+    else
+      printf '%s\n' "$file is not a file"
+      # Exit 1 at end if any args were invalid
+      exitCode=1
+    fi
+  done
+
+  # Add all files to chezmoi repo
+  chezmoi add --exact -- "${files[@]}"
+  # Add files to the _update-config file
+  for file in "${files[@]}"; do
+    local short_file=${file#"$HOME"/} # remove /home/user/
+    # If not already in the file
+    if ! grep -F -x -q "$short_file" ~/.bashrc.d/30_functions/_update-config; then
+      printf '%s\n' "$short_file" >>~/.bashrc.d/30_functions/_update-config
+    fi
+  done
+
+  # Exit with the saved code
+  return $exitCode
+}

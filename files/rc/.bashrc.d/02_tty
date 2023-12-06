@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# ~/.bashrc.d/02_tty
+# Handle tty specific settings
+
+if ! [ "${TERM,,}" = "linux" ]; then
+  return
+fi
+case "$(tty)" in
+/dev/tty*) ;;
+*) return ;;
+esac
+
+# merge config with tty-config.yml to disable nerd-fonts
+export LG_CONFIG_FILE="${XDG_CONFIG_HOME}/lazygit/config.yml,${XDG_CONFIG_HOME}/lazygit/tty-config.yml"
+
+if command -v setleds &>/dev/null; then
+  setleds -D +num
+fi
+if command -v isotope.dark &>/dev/null; then
+  isotope.dark
+fi
+if [ -f /run/motd.dynamic ]; then
+  \cat /run/motd.dynamic
+elif [ -f /var/run/motd.dynamic ]; then
+  \cat /var/run/motd.dynamic
+fi
+[ -f /etc/motd ] && \cat /etc/motd

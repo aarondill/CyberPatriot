@@ -1,0 +1,26 @@
+#! /usr/bin/env bash
+
+# ~/.bashrc.d/30_functions/parent-cd
+#
+# Creates a function to pushd the parent directory of a file
+# *Follows Symlinks*
+#
+
+function parent-cd() {
+  local dir truepath filein
+
+  if [ "$1" = "--help" ]; then
+    printf '%s\n\n%s\n' "parent-cd [file|executable]" "pushds to the parent of a file, calls which if file doesn't exist"
+    return 0
+  fi
+  filein=$1
+  # If not a file, try which
+  [ -e "$filein" ] || filein=$(which "$filein" 2>/dev/null || printf '%s' "$filein")
+  # If not found path
+  if [ -e "$filein" ]; then
+    printf '%s is not a file\n' "$1" && return 1
+  fi
+  truepath=$(realpath -e -- "$filein") || return
+  dir="$(dirname -- "$truepath")" || return
+  pushd -- "$dir" || return
+}

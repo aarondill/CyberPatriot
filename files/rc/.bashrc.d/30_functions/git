@@ -1,0 +1,30 @@
+#! /usr/bin/env bash
+
+# ~/.bashrc.d/30_functions/git
+#
+# Creates a function that commits the
+# current git repository with the message
+# provided in the first argument, or asks
+# for a message if not given, then calls
+# git push to sync to the remote
+#
+
+function compush() { # Commit and push to git
+
+  if [ "$1" = "--help" ]; then
+    printf '%s\n\n%s' "compush [mesasge]" "Commits with message given, and pushes to origin"
+    return 0
+  fi
+  if ! git rev-parse --git-dir >/dev/null 2>&1; then return 1; fi
+  if [[ -n "$1" ]]; then
+    git add . &&
+      git commit -m "$1" &&
+      git push
+  else
+    git add . &&
+      read -rp "Message for commit(empty to abort): " &&
+      git commit -m "$REPLY" &&
+      git push
+  fi
+}
+alias gitroot='cd $(git rev-parse --show-toplevel)'

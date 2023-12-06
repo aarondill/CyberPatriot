@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/40-fzf
+#
+# Sets up fzf bindings and customization
+#
+#
+
+FZF_KEY_BIND_FILE=~/.config/readline/fzf-key-bindings.bash
+FZF_COMPLETION_FILE=~/.local/share/bash-completion/completions/fzf
+# Ensure fzf is installed, and key-bindings are reachable
+if ! command -v fzf &>/dev/null; then
+  return
+fi
+
+# Add fzf key bindings
+if [ -r "$FZF_KEY_BIND_FILE" ]; then
+  # shellcheck source=/home/aaron/.config/readline/fzf-key-bindings.bash
+  source "$FZF_KEY_BIND_FILE"
+
+fi
+
+# This would be done automatically, but only on fzf<tab>, includes kill **<tab>, etc
+# TODO, seperate fzf<tab> from kill **<tab>
+if [ -r "$FZF_COMPLETION_FILE" ]; then
+  # shellcheck source=/home/aaron/.local/share/bash-completion/completions/fzf
+  source "$FZF_COMPLETION_FILE"
+else
+  # Stop if can't access completion. Everything after this relies on it
+  return
+fi
+
+# CTRL-/ to toggle small preview window to see the full command
+# CTRL-Y to copy the command into clipboard using pbcopy
+export FZF_CTRL_R_OPTS="
+  --preview 'echo {}' --preview-window up:3:hidden:wrap
+  --bind 'ctrl-/:toggle-preview'
+  --bind 'ctrl-y:execute-silent(echo -n {2..} | pbcopy)+abort'
+  --color header:italic
+  --header 'Press CTRL-Y to copy command into clipboard'"
+
+if command -v fd &>/dev/null; then
+  export FZF_CTRL_T_COMMAND='fd --hidden --follow --exclude ".git" .'
+  export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude ".git" .'
+else
+  export FZF_CTRL_T_COMMAND='find .'
+  export FZF_ALT_C_COMMAND='find . -type d '
+fi
+
+if command -v bat &>/dev/null; then
+  export FZF_CTRL_T_OPTS="
+  --preview 'bat -n --color=always {}'
+  --bind 'ctrl-/:change-preview-window(down|hidden|)'"
+else
+  export FZF_CTRL_T_OPTS="
+  --preview 'cat {}'
+  --bind 'ctrl-/:change-preview-window(down|hidden|)'"
+fi
+
+if command -v tree &>/dev/null; then
+  export FZF_ALT_C_OPTS="--preview 'tree -C {}'"
+else
+  export FZF_ALT_C_OPTS="--preview 'ls --color=always {}'"
+fi
+
+# Use fd (https://github.com/sharkdp/fd) instead of the default find
+# command for listing path candidates.
+# - The first argument to the function ($1) is the base path to start traversal
+# - See the source code (completion.{bash,zsh}) for the details.
+function _fzf_compgen_path() {
+  fd --hidden --follow --exclude ".git" . "$1"
+}
+
+# Use fd to generate the list for directory completion
+function _fzf_compgen_dir() {
+  fd --type d --hidden --follow --exclude ".git" . "$1"
+}
+
+# Advanced customization of fzf options via _fzf_comprun function
+# - The first argument to the function is the name of the command.
+# - You should make sure to pass the rest of the arguments to fzf.
+function _fzf_comprun() {
+  local aliases fzf_tree fzf_bat command=$1
+  shift
+  aliases=$(alias -p)
+  command -v bat &>/dev/null && fzf_bat="bat -n --color=always -- {}" || fzf_bat="cat -- {}"
+  command -v tree &>/dev/null && fzf_tree="tree -C -- {}" || fzf_tree="ls --color=always -- {}"
+
+  case "$command" in
+  cd | pushd | rmdir | "${dir_completeds[@]}") fzf --preview 'tree -C {} | head -200' "$@" ;;
+  export | unset | printenv) fzf --preview "eval 'printf \"%s \" \${{}[@]}'" "$@" ;;
+  ssh | telnet) fzf --preview 'dig -- {}' "$@" ;;
+  unalias) fzf --preview "printf '%s' ${aliases@Q} | grep -- 'alias {}='" "$@" --preview-window down:70%:wrap --min-height 20 ;;
+  # Call fzf_tree if it's a dir, else fzf_bat
+  *) fzf --preview "[ -d {} ] && ($fzf_tree) || ($fzf_bat)" "$@" ;;
+  esac
+}
+
+export _fzf_comprun
+
+# A few extras
+# path | dir | var | alias | host | proc
+complete -d -F _longopt tree
+
+dir_completeds=(dir live-server nautilus rmdir tree wipe-modules)
+for cmd in "${dir_completeds[@]}"; do
+  _fzf_setup_completion dir "$cmd"
+done
+
+path_completeds=(basename cat chattr chmod chown code diff diff3 dirname
+  editor javac ln ls node nodejs nvim prettier readlink realpath rm rsync
+  sh tail tar tee totem ts-node ts-node-esm uglifyjs vim vim.tiny vsce wc)
+
+for cmd in "${path_completeds[@]}"; do
+  _fzf_setup_completion path "$cmd"
+done

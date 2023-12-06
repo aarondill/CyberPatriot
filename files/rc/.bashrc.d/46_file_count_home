@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/46_file_count_home
+#
+# Displays count of files in home directory if shlvl = 1
+# This should be after neofetch
+#
+if [ "$SHLVL" -gt "1" ]; then return 0; fi
+if command -v file-count &>/dev/null; then
+  printf '%s\n' "$(file-count "$HOME") files found in $HOME"
+fi

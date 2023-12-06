@@ -1,0 +1,413 @@
+# Wait 10 milliseconds for starship to check files under the current directory.
+
+scan_timeout = 10
+add_newline = true
+format = "$all"
+continuation_prompt = "[>](bright-green) "
+
+[aws]
+format = "[$symbol($profile )(\\($region\\) )(\\[$duration\\] )]($style)"
+symbol = "aws "
+
+[azure]
+symbol = "az "
+format = '[$symbol($subscription )($username )]($style)'
+
+[battery]
+full_symbol = '󰁹 '
+charging_symbol = '󰂄'
+discharging_symbol = '󰂃 '
+unknown_symbol = '󰂑 '
+empty_symbol = '󰂎 '
+format = '[$symbol$percentage ]($style)'
+
+[[battery.display]]
+# below 10%
+threshold = 10
+style = 'bold red'
+
+[[battery.display]]
+# between 10% and 30%
+threshold = 30
+style = 'bold yellow'
+
+[[battery.display]]
+# between 30% and 50%
+threshold = 50
+style = 'bold green'
+
+[buf]
+format = "[$symbol]($style)"
+symbol = "buf "
+
+[bun]
+format = "[$symbol]($style)"
+symbol = "bun "
+
+[c]
+symbol = "C "
+format = "[$symbol($name )]($style)"
+
+[character]
+success_symbol = "[>](bold green)"
+error_symbol = "[>](bold red)"
+vimcmd_symbol = "[<](bold green)"
+
+[cmake]
+symbol = "cmake "
+format = "[$symbol]($style)"
+
+[cmd_duration]
+format = "[$duration]($style)"
+min_time = 1_000
+show_milliseconds = false
+
+[cobol]
+format = "[$symbol]($style) "
+symbol = "cobol "
+
+[conda]
+symbol = "conda "
+format = "[$symbol$environment]($style) "
+
+[container]
+symbol = "cont "
+format = '[$symbol($name )]($style)'
+disabled = true # disable because it shows in chromeos dev mode
+
+[crystal]
+format = "[$symbol]($style)"
+symbol = "cr "
+
+[daml]
+symbol = "daml "
+format = "[$symbol]($style)"
+
+[dart]
+format = "[$symbol]($style)"
+symbol = "dart "
+
+[deno]
+symbol = "deno "
+format = "[$symbol]($style)"
+
+[directory]
+truncation_length = 3
+truncation_symbol = '…/'
+truncate_to_repo = false
+read_only = " ro"
+format = '[$path]($style)[$read_only]($read_only_style) '
+
+[docker_context]
+symbol = "docker "
+format = "[$symbol($context )]($style)"
+
+[dotnet]
+symbol = ".NET "
+format = "[$symbol(tfm $tfm )]($style) "
+
+[elixir]
+symbol = "exs "
+format = "[$symbol]($style)"
+
+[elm]
+symbol = "elm "
+format = "[$symbol]($style)"
+
+[erlang]
+symbol = 'elang '
+format = "[$symbol]($style)"
+
+[fennel]
+symbol = "fnl "
+format = "[$symbol]($style)"
+
+[fossil_branch]
+symbol = "fossil "
+format = "[$symbol($branch )]($style)"
+
+[gcloud]
+symbol = "gcp "
+format = '[$symbol$account(@$domain)(\($region\))]($style) '
+
+[git_branch]
+symbol = "git "
+format = "[$symbol$branch(:$remote_branch)]($style) "
+
+[git_commit]
+tag_disabled = false
+tag_symbol = " tag "
+
+[git_metrics]
+disabled = false
+
+[git_status]
+format = "([\\[$all_status$ahead_behind\\] ]($style))"
+ahead = ">$count"
+behind = "<$count"
+diverged = "$behind_count<>$ahead_count"
+renamed = "r"
+deleted = "x"
+typechanged = "t"
+conflicted = "≠"
+# ignore_submodules = true
+
+[golang]
+symbol = "go "
+format = "[$symbol]($style)"
+
+[gradle]
+symbol = "gradle "
+format = "[$symbol]($style)"
+
+[guix_shell]
+symbol = "guix "
+format = "[$symbol]($style)"
+
+[haskell]
+symbol = "hs "
+format = "[$symbol]($style)"
+
+[haxe]
+symbol = "haxe "
+format = "[$symbol]($style)"
+
+[helm]
+symbol = "helm "
+format = "[$symbol]($style)"
+
+[hg_branch]
+symbol = "hg "
+format = "[$symbol$branch(:$topic)]($style) "
+
+[hostname]
+format = '[$ssh_symbol$hostname]($style) '
+ssh_only = true
+ssh_symbol = "ssh "
+
+[java]
+symbol = "java "
+format = "[$symbol]($style)"
+
+[jobs]
+format = '[$symbol$number ]($style)'
+symbol = '&'
+number_threshold = 1
+symbol_threshold = 1
+
+[julia]
+symbol = "jl "
+format = "[$symbol]($style)"
+
+[kotlin]
+symbol = "kt "
+format = "[$symbol]($style)"
+
+[kubernetes]
+symbol = "kube "
+format = "[$symbol$context (\\($namespace\\) )]($style)"
+
+[line_break]
+disabled = false
+
+[lua]
+symbol = "lua "
+format = "[$symbol]($style)"
+detect_files = [".luarc.json", ".luarc.jsonc", ".lua-version"]
+
+[memory_usage]
+symbol = "ram: "
+format = '[$symbol$ram_pct(|$swap_pct) ]($style)'
+disabled = false
+threshold = 75
+
+[meson]
+symbol = "meson "
+format = "[$symbol$project ]($style)"
+
+[nim]
+symbol = "nim "
+format = "[$symbol]($style)"
+
+[nix_shell]
+symbol = "nix "
+format = "[$symbol$state (\\($name\\) )]($style)"
+
+[nodejs]
+symbol = "node "
+format = "[$symbol($version$engines_version )]($style)"
+version_format = "${major}"
+
+[ocaml]
+symbol = "ml "
+format = "[$symbol(\\($switch_indicator$switch_name\\) )]($style)"
+
+[opa]
+symbol = "opa "
+format = "[$symbol]($style)"
+
+[openstack]
+symbol = "openstack "
+format = "[$symbol$cloud(\\($project\\))]($style) "
+
+[os]
+format = "[$symbol]($style)"
+disabled = true
+
+[os.symbols]
+Alpaquita = "alq "
+Alpine = "alp "
+Amazon = "amz "
+Android = "andr "
+Arch = "rch "
+Artix = "atx "
+CentOS = "cent "
+Debian = "deb "
+DragonFly = "dfbsd "
+Emscripten = "emsc "
+EndeavourOS = "ndev "
+Fedora = "fed "
+FreeBSD = "fbsd "
+Garuda = "garu "
+Gentoo = "gent "
+HardenedBSD = "hbsd "
+Illumos = "lum "
+Linux = "lnx "
+Mabox = "mbox "
+Macos = "mac "
+Manjaro = "mjo "
+Mariner = "mrn "
+MidnightBSD = "mid "
+Mint = "mint "
+NetBSD = "nbsd "
+NixOS = "nix "
+OpenBSD = "obsd "
+OpenCloudOS = "ocos "
+openEuler = "oeul "
+openSUSE = "osuse "
+OracleLinux = "orac "
+Pop = "pop "
+Raspbian = "rasp "
+Redhat = "rhl "
+RedHatEnterprise = "rhel "
+Redox = "redox "
+Solus = "sol "
+SUSE = "suse "
+Ubuntu = "ubnt "
+Unknown = "unk "
+Windows = "win "
+
+[package]
+symbol = ""
+display_private = true
+format = "[$symbol$version ]($style)"
+
+[perl]
+symbol = "pl "
+format = "[$symbol]($style)"
+
+[php]
+symbol = "php "
+format = "[$symbol]($style)"
+
+[pijul_channel]
+symbol = "pijul "
+format = "[$symbol$channel ]($style)"
+
+[pulumi]
+symbol = "pulumi "
+format = "[$symbol$stack ]($style)"
+
+[purescript]
+symbol = "purs "
+format = "[$symbol]($style)"
+
+[python]
+symbol = "py "
+format = "[$symbol]($style)"
+
+[raku]
+symbol = "raku "
+format = "[$symbol]($style)"
+
+[red]
+symbol = "red "
+format = "[$symbol]($style)"
+
+[rlang]
+symbol = "R "
+format = "[$symbol]($style)"
+
+[ruby]
+symbol = "rb "
+format = "[$symbol]($style)"
+
+[rust]
+symbol = "rs "
+format = "[$symbol]($style)"
+
+[scala]
+symbol = "scala "
+format = "[$symbol]($style)"
+
+[shell]
+disabled = false
+
+[shlvl]
+# See https://github.com/starship/starship/issues/2407
+disabled = true
+threshold = 2
+
+[spack]
+symbol = "spack "
+format = "[$symbol$environment ]($style)"
+
+[status]
+disabled = false
+symbol = ""
+format = '[$symbol($signal_name )$status (\($common_meaning\) )]($style)'
+map_symbol = false
+# Pipe errors!
+pipestatus = true
+pipestatus_format = '\[$pipestatus\] => [$symbol$signal_name$status ]($style)'
+pipestatus_segment_format = "[$status]($style)"
+
+[sudo]
+disabled = true
+style = 'bold red'
+symbol = "sudo"
+format = '[\[$symbol\]]($style)'
+
+[swift]
+symbol = "swift "
+format = "[$symbol]($style)"
+
+[terraform]
+symbol = "terraform "
+format = "[$symbol$workspace]($style)"
+
+[time]
+style = 'dimmed green'
+format = "[$time]($style)"
+time_format = "%I:%M%P "
+disabled = false
+
+[username]
+format = "[$user ]($style)"
+show_always = true
+
+[vagrant]
+symbol = "vagrant "
+format = "[$symbol]($style)"
+
+[vcsh] # You people be crazy
+symbol = 'vcsh '
+format = '[$symbol$repo ]($style)'
+
+[vlang]
+symbol = "vlang "
+format = "[$symbol]($style)"
+
+[zig]
+symbol = "zig "
+format = "[$symbol]($style)"

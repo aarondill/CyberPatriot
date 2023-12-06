@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2034 # allow unused variables
+
+# ~/.bashrc.d/10_utilVars
+#
+# Stores variables useful to end-user usage
+# Includes token keys and common directory variables
+#
+
+# fail quietly and
+if declare -A locations 2>/dev/null; then :; elif [ "$?" -eq 2 ]; then
+  printf '%s\n' "Warning: Associative arrays are not supported in your shell. Location variables will be unavailable." >&2
+  return 0
+fi
+
+# File locations
+locations[code]=~/code
+locations[bash]=${locations[code]}/bashScripts
+locations[js]=${locations[code]}/js
+locations[javascript]=${locations[js]}
+locations[java]=${locations[code]}/java
+locations[python]=${locations[code]}/Python
+locations[chromeext]=${locations[code]}/chromeExtensions
+locations[config]=${locations[code]}/config
+locations[repos]=${locations[code]}/repos
+if [ -d "/run/media/$USER" ]; then
+  locations[backup]="/run/media/$USER/Backup"
+elif [ -d "/media/$USER" ]; then
+  locations[backup]="/media/$USER/Backup"
+elif [ -d "/mnt/chromeos/" ]; then
+  locations[backup]='/mnt/chromeos/removable/Backup'
+fi
+
+for key in "${!locations[@]}"; do
+  d=${locations[$key]} # variable by name
+  export "$key=$d"     # set variables (ie $code,$bash,...)
+  alias "cd-$key=cd '$d'"
+  # removed due to backup
+  # if ! [ -d "$d" ]; then
+  #   mkdir -p -- "$d"
+  # fi
+done
+unset d key locations

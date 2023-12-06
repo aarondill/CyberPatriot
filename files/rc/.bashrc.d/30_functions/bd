@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/30_functions/bd
+#
+# Sets up bd function for going up parent directories.
+# taken from https://github.com/vigneshwaranr/bd and
+# modified to work better
+#
+function bd() {
+  function help_msg() {
+    printf "Usage: bd [OPTION]... [PATTERN]\n"
+    printf "Quickly go back to a specific parent directory in bash.\n\n"
+
+    printf "\e[1mOPTIONS\e[0m\n"
+    printf "  %-28s %s\n" "-e" "PATTERN must fully match directory name"
+    printf "  %-28s %s\n" "-i" "PATTERN is case SENSITIVE"
+    printf "  %-28s %s\n" "-?, -h, --help" "Display this message"
+
+    printf "\n\e[1mALTERNATE USAGE EXAMPLES\e[0m\n"
+    printf "  %-28s %s\n" "\$(bd parentDir)/script.sh" "Execute \"script.sh\" in matching path"
+
+    return 0
+  }
+
+  newpwd() (
+    local oldpwd NEWPWD exact EXIT
+    oldpwd=$1                   # store old
+    shift 1                     # remove oldpwd
+    shopt -s nocasematch        # set case insensive default
+    exact=''                    # default to false
+    while getopts ':ie' opt; do # check each argument
+      case $opt in
+      i)
+        shopt -u nocasematch # set case sensitive
+        ;;
+      e)
+        exact=t # Set exact match
+        ;;
+      \?)
+        help_msg
+        printf "Invalid option: -%s" "$OPTARG"
+        return 2
+        ;;
+      esac
+    done
+    shift "$((OPTIND - 1))"
+
+    pattern=$*
+    if [[ -z "$exact" ]]; then # if not exact (default)
+      #shellcheck disable=SC2001
+      findRegex="^(.+)?${pattern}[^/]*\/"
+      [[ $oldpwd =~ $findRegex ]]
+      echo "${BASH_REMATCH[0]}"
+
+    else # is exact
+      # fully match - removes everything after the pattern
+      echo "${oldpwd/\/$pattern\/*/\/$pattern}" # /pattern/* -- >/pattern
+
+    fi
+
+  )
+
+  # Show help
+  [ "$#" -eq 0 ] && help_msg && return 2
+  for arg in "$@"; do
+    if [ "$arg" = '-?' ] ||
+      [ "$arg" = '--help' ] ||
+      [ "$arg" = '-h' ]; then
+      help_msg
+      return 0
+    fi
+  done
+
+  # Allow `bd -` to act like `cd -`
+  # And allow `bd /` --> `cd /`
+  # And allow `bd /` --> `cd /`
+  if [ "$1" = '-' ] || [ "$1" = '/' ] || [ "$1" = '~' ]; then
+    builtin cd "$1" || return && return
+  fi
+
+  oldpwd=$(pwd)                   # Store old pwd
+  NEWPWD=$(newpwd "$oldpwd" "$@") # Get new PWD
+  EXIT=$?                         # Store exit code
+  # Return if failed
+  if [[ $EXIT -gt 0 ]]; then
+    printf '%s\n' "$NEWPWD" # Print output
+    return $EXIT            # Exit on failure
+  fi
+
+  # Check if it wouldn't move
+  if [ -z "$NEWPWD" ] || [ "$NEWPWD" = "$oldpwd" ]; then
+    echo "No such occurrence." >&2
+  else
+    # Output found
+    printf '%s\n' "$NEWPWD"
+    # If stdout is tty, cd to found
+    if [[ -t 1 ]]; then builtin cd "$NEWPWD" || return; fi
+  fi
+}
+
+# Add autocomplete support for bd for bash.
+function _bd() {
+  local IFS cur completions
+  # Handle spaces in filenames by setting the delimeter to be a newline.
+  IFS=$'\n'
+  # Current argument on the command line.
+  cur=${COMP_WORDS[COMP_CWORD]}
+
+  # Available directories to autcomplete to.
+  completions=$(dirname "$(pwd)")
+  completions="${completions//\//$'\n'}"$'\n/'
+
+  while read -r -d $'\n'; do
+    COMPREPLY+=("$REPLY")
+  done < <(compgen -W "$completions" -- "$cur")
+}
+complete -F _bd bd

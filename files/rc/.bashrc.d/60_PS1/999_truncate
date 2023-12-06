@@ -1,0 +1,47 @@
+#! /usr/bin/env bash
+
+# ~/.bashrc.d/60_PS1/999_truncate
+#
+# Creates a __new_PWD_PS1 function to generate a
+# truncated PS1 path and replaces each instance of
+# '\w' in the PS1 with this function before each
+# display by appending to PROMPT_COMMAND
+#
+
+if [ "$DISABLE_CUSTOM_PS1" = 1 ]; then return; fi
+
+# Function to get length of *displayed* ps1
+function plen() {
+  local escape_removed len local_PS1 first
+  first=${1:-$PS1}
+  local_PS1=${first//"\$(__new_PWD_PS1)"/}
+  escape_removed="$(perl -pe 's|\\\[.*?\\\]||g' <<<"${local_PS1}X")"
+  len="$(wc -m <<<"${escape_removed@P}")"
+  printf '%s\n' "$((len - 2))"
+}
+
+# Set new PS1 to truncate PWD to between 20 chars and 1/2 of screen
+function __new_PWD_PS1() {
+  local MIN_WIDTH half_screen pwd_length curr_pwd curr_len
+  MIN_WIDTH=20
+  DEFAULT_PS1_WIDTH=$(plen "$PS1")
+  half_screen=$((+(COLUMNS - DEFAULT_PS1_WIDTH) / 2))
+  pwd_length=$((half_screen > MIN_WIDTH ? half_screen : MIN_WIDTH))
+  curr_pwd="$(pwd | sed s\\^"$HOME"\\~\\)"
+  curr_len=$(echo -n "$curr_pwd" | wc -c)
+  if [ "$(echo -n "$curr_pwd" | wc -c | tr -d " ")" -gt $pwd_length ]; then
+    echo -n ..."$(echo -n "$curr_pwd" | cut -c $((curr_len - pwd_length + 1))-)"
+  else
+    echo -n "$curr_pwd"
+  fi
+}
+
+# Replace ps1 \w with function to get new pwd
+# shellcheck disable=SC2016
+replacePath='PS1="${PS1//'\\\\w'/"\$(__new_PWD_PS1)"}"'
+# Don't do if contains already
+if ! printf '%s\0' "${PROMPT_COMMAND[@]}" | grep -F -x -z -q -- "$replacePath"; then
+  # Append to prompt command
+  PROMPT_COMMAND+=("$replacePath")
+fi
+unset replacePath

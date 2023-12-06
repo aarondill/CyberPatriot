@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# if `z` is installed, initiate it and set `cd` to `z`
+if ! zoxide -V &>/dev/null; then return 0; fi
+
+# HACK: Zoxide overwrites the PROMPT_COMMAND, so we must move it out of it's view, and restore it afterwards
+OLD_PROMPT_COMMAND=("${PROMPT_COMMAND[@]}")
+PROMPT_COMMAND="" # only overwrites PROMPT_COMMAND[0], but it doesn't matter
+
+export _ZO_ECHO=0 # Fixes warning if set -u
+eval "$(zoxide init bash)"
+
+PROMPT_COMMAND=("$PROMPT_COMMAND" "${OLD_PROMPT_COMMAND[@]}") # prepend, since it's trying to prepend anyways
+unset OLD_PROMPT_COMMAND
+
+# Reuse cd completion if present (overwritten already), else default to directories
+complete=$(complete -p cd 2>/dev/null || printf '%s ' complete -d cd)
+# remove ' cd' and replace with ' z'. Lack of quotes is intentional!
+if [ -n "$complete" ]; then
+  eval "${complete% cd} z"
+fi
+alias cd='z'
