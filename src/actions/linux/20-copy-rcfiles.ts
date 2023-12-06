@@ -126,18 +126,26 @@ export async function run() {
 		if (suc === false) return false;
 	}
 
-	for (const [path, options] of Object.entries(clone ?? {})) {
+	for (const [tpath, options] of Object.entries(clone ?? {})) {
+		// Permit tilde-expansion of the path.
+		const tildeReplaced = tpath.startsWith("~/")
+			? path.join(home, tpath.slice(2))
+			: tpath;
+		// if path is relative, it's relative to home
+		const filepath = path.resolve(home, tildeReplaced);
+
 		// eslint-disable-next-line prefer-const
 		let { url, args } = options ?? {};
 		if (!url) {
-			warn(`url is missing in clone config (${path}). Ignoring...`);
+			warn(`url is missing in clone config (${filepath}). Ignoring...`);
 			continue;
 		}
 		args ??= [];
 		args.push("--filter=tree:0");
 		// Already exists *and* is a git repo
-		if ((await $`git -C ${path} rev-parse`.exitCode) === 0) continue;
-		const { exitCode } = await $`git clone ${args} -- ${url} ${path}`.nothrow();
+		if ((await $`git -C ${filepath} rev-parse`.exitCode) === 0) continue;
+		const { exitCode } =
+			await $`git clone ${args} -- ${url} ${filepath}`.nothrow();
 		if (exitCode !== 0) warn(`command failed!`);
 	}
 }
