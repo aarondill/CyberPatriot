@@ -60,5 +60,5 @@ log "Could not find n! Using curl to run n from github!"
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
 download "https://raw.githubusercontent.com/tj/n/master/bin/n" "$tmp"
-bash -- "$tmp" "${args[@]}"
+verbose sudo bash -- "$tmp" "${args[@]}"
 rm "$tmp"
