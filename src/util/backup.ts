@@ -3,7 +3,7 @@ import os from "node:os";
 import { fs as fsExtra } from "zx";
 import fs from "node:fs/promises";
 import { createWriteStream } from "node:fs";
-import { fileExists, getHome, warn } from "./index.js";
+import { egid, euid, fileAccess, fileExists, getHome, warn } from "./index.js";
 import { once } from "node:events";
 
 async function ensureBackupDirectory() {
@@ -11,6 +11,12 @@ async function ensureBackupDirectory() {
 
 	const BACKUP_DIR = path.join(home, "file-backups");
 	await fs.mkdir(BACKUP_DIR, { recursive: true });
+	const canrw = await fileAccess(
+		BACKUP_DIR,
+		fs.constants.R_OK | fs.constants.W_OK
+	);
+	// chown to ensure we can write to it
+	if (!canrw) await fs.chown(BACKUP_DIR, euid, egid);
 	return BACKUP_DIR;
 }
 
@@ -23,7 +29,7 @@ export async function backup(src: string): Promise<boolean> {
 
 	await fs.mkdir(path.dirname(newDest), { recursive: true }); // ensure parents exist
 
-	console.log(`Backing up file '${src}' to '${dest}'`);
+	console.log(`Backing up file '${src}' to '${newDest}'`);
 	const stat = await fs.stat(src);
 	if (!stat.isDirectory()) {
 		await fs.copyFile(src, newDest);

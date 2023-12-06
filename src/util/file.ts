@@ -3,15 +3,19 @@ import type { FileHandle } from "node:fs/promises";
 import fs from "node:fs/promises";
 import { isNodeError } from "./types.js";
 import path from "node:path";
+import type { Parameters } from "tsafe";
 
-export async function fileExists(file: PathLike) {
+export async function fileAccess(...args: Parameters<typeof fs.access>) {
 	try {
-		await fs.access(file, fs.constants.F_OK);
+		await fs.access(...args);
 		return true;
 	} catch (e) {
 		if (isNodeError(e)) return false;
 		throw e; // this is unexpected. Throw it.
 	}
+}
+export async function fileExists(file: PathLike) {
+	return await fileAccess(file, fs.constants.F_OK);
 }
 
 export async function openFile<R, A extends unknown[]>(
