@@ -2,23 +2,33 @@
 import os from "node:os";
 
 export let euid: number;
+export let egid: number;
 
 let assertHasRunSuccessfully = false;
 // When later root-only checks are needed, call useRoot() to set the new euid
 // If a string is returned, it is the error message!
 export function assertRoot(): string | undefined {
 	if (assertHasRunSuccessfully) return; // This should be safe to use repeatedly
-	if (!process.geteuid || !process.seteuid) return; // Windows
+	if (
+		!process.geteuid ||
+		!process.seteuid ||
+		!process.getegid ||
+		!process.setegid
+	)
+		return; // Windows
 	if (process.geteuid() !== 0)
 		return "This script should be run as root (using sudo)";
 
 	const userid = (process.env.SUDO_UID ?? "").trim();
 	const username = (process.env.SUDO_USER ?? "").trim();
-	if (userid === "" && username === "")
+	const gid = (process.env.SUDO_GID ?? "").trim();
+	if ((userid === "" && username === "") || gid === "")
 		return "Set $SUDO_UID or SUDO_USER to current user (should usually not be 0)";
 
 	process.seteuid(userid === "" ? username : +userid);
+	process.setegid(gid);
 	euid = process.geteuid();
+	egid = process.getegid();
 
 	assertHasRunSuccessfully = true;
 }
