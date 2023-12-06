@@ -13,5 +13,5 @@ if ! grep -q '^flags\s*:.* hypervisor\b' /proc/cpuinfo; then
 fi
 
 permfile="$root/files/perms.txt"
-dirs=(/sbin/ /bin/ /etc/ /dev/ /boot/) #Note: the trailing slashes are important to dereference links
+dirs=(/sbin/ /bin/ /etc/ /boot/) #Note: the trailing slashes are important to dereference links
 sudo find "${dirs[@]}" -printf '%m %p\n' >|"$permfile"
