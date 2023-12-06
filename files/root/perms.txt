@@ -1,0 +1,6 @@
+775 ./etc
+775 ./etc/apt
+775 ./etc/apt/apt.conf.d
+644 ./etc/apt/apt.conf.d/10periodic
+644 ./etc/apt/apt.conf.d/20auto-upgrades
+664 ./perms.txt

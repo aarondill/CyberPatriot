@@ -97,6 +97,18 @@ verbose() {
   printf '\n'
   "$@" # run the input
 }
+# confirm "do you really want to do %s?" "that" --> ...do that? (Y/n)
+# Strings are evaluated using printf
+function confirm() {
+  local prompt confirmation
+  # shellcheck disable=SC2059 # I know this is *generally* wrong, but this is intentional.
+  prompt="$(printf "$1" "${@:2}")"
+  read -rep "$prompt (Y/n) " confirmation </dev/tty
+  if [ -z "$confirmation" ] || [[ "${confirmation,,}" =~ ^\s*y(es)?\s*$ ]]; then
+    return 0
+  fi
+  return 1
+}
 
 ###
 ### Text utils
