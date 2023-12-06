@@ -12,6 +12,7 @@ import fs from "node:fs/promises";
 import type { PathLike } from "node:fs";
 import { fileExists, findFile, openFile, walk } from "../../util/file.js";
 import { confirm } from "../../util/flow.js";
+import backup from "../../util/backup.js";
 const filename = fileURLToPath(import.meta.url);
 
 async function handlePerms(permsFile: PathLike) {
@@ -49,6 +50,7 @@ async function copyRoot(rootdir: string) {
 			if (!conf) continue;
 		}
 		await fs.mkdir(destDir, { recursive: true });
+		await backup(dest);
 		await fs.copyFile(file, dest);
 	}
 

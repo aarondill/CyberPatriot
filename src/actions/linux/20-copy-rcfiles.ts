@@ -1,4 +1,4 @@
-import { error, warn } from "../../util/index.js";
+import { backup, error, warn } from "../../util/index.js";
 import type { Action } from "../index.js";
 import { id } from "tsafe";
 import { fileExists, findFile, openFile, walk } from "../../util/file.js";
@@ -20,6 +20,7 @@ async function updateCopy(home: string, root: string, rcfiles: string) {
 	for await (const file of walk(rcfiles)) {
 		const dest = path.join(home, path.relative(rcfiles, file));
 		await fs.mkdir(path.dirname(dest), { recursive: true });
+		await backup(dest);
 		const err = await fs.copyFile(file, dest).catch(id<unknown>);
 		if (err) {
 			if (!isNodeError(err)) throw err as unknown;
