@@ -1,4 +1,4 @@
-import type { PathLike } from "node:fs";
+import type { Mode, PathLike } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
 import fs from "node:fs/promises";
 import { isNodeError } from "./types.js";
@@ -15,8 +15,8 @@ export async function fileExists(file: PathLike) {
 }
 
 export async function openFile<R, A extends unknown[]>(
-	path: string,
-	mode: string | undefined,
+	path: PathLike,
+	mode: Mode,
 	cb: (fd: FileHandle, ...args: A) => R | PromiseLike<R>,
 	...args: A
 ): Promise<R> {
@@ -30,6 +30,7 @@ export async function openFile<R, A extends unknown[]>(
 }
 
 export async function findFile(filename: string, from: string = process.cwd()) {
+	// Important to allow dirname to always find the parent
 	from = path.resolve(from);
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
@@ -40,8 +41,10 @@ export async function findFile(filename: string, from: string = process.cwd()) {
 		from = dirname; // next iteration use the parent directory
 	}
 }
-// Recursively walks the directory tree and yields all files and (optionally) directories
-// All returned paths are absolute paths.
+/**
+ * Recursively walks the directory tree and yields all files and (optionally) directories
+ * All returned paths are absolute paths.
+ */
 export async function* walk(
 	dir: string,
 	// Whether to yeild directories or not.
