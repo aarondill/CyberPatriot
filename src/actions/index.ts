@@ -16,6 +16,8 @@ export type ActionModuleOthers = {
 	description?: string;
 	// Note: only for index.js files. Ignored elsewhere.
 	importChildren?: boolean;
+	// if true, this action will not be run or prompted
+	disabled?: boolean;
 };
 export type ActionModule = ActionModuleIndexJS | ActionModuleOthers;
 
@@ -90,7 +92,7 @@ async function importAction(
 	const actionModule = (await import(filepath)) as unknown;
 	assertDynamicImport(actionModule);
 	const defaultExport = actionModule.default;
-	let { importChildren, description } = actionModule;
+	let { importChildren, description, disabled } = actionModule;
 
 	if (!importChildren) importChildren = false; // undefined and any falsey values are false
 	if (typeof importChildren !== "boolean") {
@@ -102,11 +104,21 @@ async function importAction(
 		importChildren = false; // set to false if invalid
 		assert(is<false>(importChildren));
 	}
-
 	if (onlyCheckIndexJSRequiredTypes) {
 		return {
 			importChildren: importChildren,
 		} satisfies ActionModuleIndexJS;
+	}
+
+	if (!disabled) disabled = false; // undefined and any falsey values are false
+	if (typeof disabled !== "boolean") {
+		warn(
+			`Action "${filepath}" contains an invalid export disabled=${String(
+				disabled
+			)}`
+		);
+		disabled = false; // set to false if invalid
+		assert(is<false>(disabled));
 	}
 
 	if (!typeGuard<Action>(defaultExport, typeof defaultExport === "function")) {
@@ -124,8 +136,9 @@ async function importAction(
 	return {
 		// Note: this can't be guarenteed because we can't check the return type.
 		default: defaultExport,
-		importChildren: importChildren,
-		description: description,
+		importChildren,
+		description,
+		disabled,
 	} satisfies ActionModuleOthers;
 }
 
@@ -133,6 +146,7 @@ export async function runActions(args: string[]): Promise<boolean> {
 	for await (const filepath of getActionList()) {
 		const action = await importAction(filepath);
 		if (!action) continue;
+		if (action.disabled) continue;
 		const msg = `run action '${action.description ?? filepath}'`;
 		if (!(await confirm(msg, true))) continue;
 

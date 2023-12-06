@@ -9,4 +9,5 @@ export function run() {
 }
 
 export const description = `An unimplemented action at ${filename}.`;
+export const disabled = true;
 export default run satisfies Action;
