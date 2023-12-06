@@ -9,7 +9,7 @@ import { getHome } from "../../util/root.js";
 import { isNodeError } from "../../util/types.js";
 import yaml from "yaml";
 import { isNativeError } from "node:util/types";
-import { $ } from "zx";
+import { $, which } from "zx";
 
 async function updateCopy(home: string, root: string, rcfiles: string) {
 	if (!(await fileExists(rcfiles))) {
@@ -70,10 +70,15 @@ export async function parseYaml(rc: string): Promise<object | undefined> {
 }
 
 async function installPackages(...packages: string[]) {
-	// TODO: This
-	warn("This funciton is not yet implemented.");
-	void packages;
-	return await Promise.resolve();
+	const apt = await which("apt", { nothrow: true });
+	if (!apt) {
+		const thisfile = path.basename(fileURLToPath(import.meta.url));
+		return error(
+			`Could not find apt! ${thisfile} currently only works on debian-based systems!`
+		);
+	}
+	const { exitCode } = await $`apt install -- ${packages}`.nothrow();
+	if (exitCode !== 0) warn("command failed!");
 }
 
 async function getOSID() {
@@ -117,7 +122,8 @@ export async function run() {
 		if (packages["*"]) packageList.push(...packages["*"]);
 		if (distro) packageList.push(...distro);
 
-		await installPackages(...packageList);
+		const suc = await installPackages(...packageList);
+		if (suc === false) return false;
 	}
 
 	for (const [path, options] of Object.entries(clone ?? {})) {
@@ -129,6 +135,8 @@ export async function run() {
 		}
 		args ??= [];
 		args.push("--filter=tree:0");
+		// TODO: Check if the path already exists.
+		// if (await fs.stat(path))
 		const { exitCode } = await $`git clone ${args} -- ${url} ${path}`.nothrow();
 		if (exitCode !== 0) warn(`command failed!`);
 	}
