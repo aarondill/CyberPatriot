@@ -13,6 +13,7 @@ import type { PathLike } from "node:fs";
 import { fileExists, findFile, openFile, walk } from "../../util/file.js";
 import { confirm } from "../../util/flow.js";
 import backup from "../../util/backup.js";
+import { useRoot } from "../../util/root.js";
 const filename = fileURLToPath(import.meta.url);
 
 async function handlePerms(permsFile: PathLike) {
@@ -30,7 +31,7 @@ async function handlePerms(permsFile: PathLike) {
 			// Change the permissions to match
 			const msg = `Changing permissions of ${name} from ${fpString} to ${perm}`;
 			console.log(msg);
-			await fs.chmod(name, perm);
+			await useRoot(fs.chmod, name, perm);
 		}
 	});
 }
@@ -51,7 +52,7 @@ async function copyRoot(rootdir: string) {
 		}
 		await fs.mkdir(destDir, { recursive: true });
 		await backup(dest);
-		await fs.copyFile(file, dest);
+		await useRoot(fs.copyFile, file, dest);
 	}
 
 	// Do this *AFTER* copying the root folder
