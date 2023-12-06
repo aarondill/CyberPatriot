@@ -40,3 +40,19 @@ export async function findFile(filename: string, from: string = process.cwd()) {
 		from = dirname; // next iteration use the parent directory
 	}
 }
+// Recursively walks the directory tree and yields all files and (optionally) directories
+// All returned paths are absolute paths.
+export async function* walk(
+	dir: string,
+	// Whether to yeild directories or not.
+	directories: boolean = false
+): AsyncGenerator<string> {
+	dir = path.resolve(dir);
+	const files = await fs.readdir(dir, { withFileTypes: true });
+	for (const file of files) {
+		const filepath = path.join(dir, file.name);
+		const isDirectory = file.isDirectory();
+		if (isDirectory) yield* walk(filepath); // we've found a directory. Yeild all the files from it
+		if (!isDirectory || directories) yield filepath; // yeild the current file or directory
+	}
+}

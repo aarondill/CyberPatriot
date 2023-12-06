@@ -26,3 +26,5 @@ export function assertDynamicImport(
 		"import() returned non-object. This should be impossible. Is there a then() method?";
 	assert(isModuleNamespaceObject(module), msg);
 }
+
+export type Nullable<T> = T | null | undefined;
