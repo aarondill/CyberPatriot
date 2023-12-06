@@ -135,11 +135,11 @@ export async function run() {
 		}
 		args ??= [];
 		args.push("--filter=tree:0");
-		// TODO: Check if the path already exists.
-		// if (await fs.stat(path))
+		// Already exists *and* is a git repo
+		if ((await $`git -C ${path} rev-parse`.exitCode) === 0) continue;
 		const { exitCode } = await $`git clone ${args} -- ${url} ${path}`.nothrow();
 		if (exitCode !== 0) warn(`command failed!`);
 	}
 }
 export default run satisfies Action;
-export const description = "Copy common config to the VM for easier usage.";
+export const description = "Copy common config to the VM and install packages.";
