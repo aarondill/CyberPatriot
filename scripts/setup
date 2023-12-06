@@ -2,7 +2,23 @@
 set -euC -o pipefail
 MIN_NODE_MAJOR=19
 
-root=$(npm prefix) && root=${root%/}
+if command -v npm &>/dev/null; then
+  root=$(npm prefix) && root=${root%/}
+else
+  root="$PWD" # start at current directory
+  while ! [ -f "$root/package.json" ]; do
+    dirname="$(dirname -- "$root")"
+    if [ "$root" = "$dirname" ]; then
+      root=''
+      break # if we've reached root and can't find package.json, stop
+    fi
+    root="$dirname"
+  done
+fi
+if [ -z "$root" ]; then
+  printf '%s\n' "Could not find project root. Please ensure package.json exists!" >&2
+  exit 1
+fi
 cd "$root"
 # shellcheck source=./lib.sh # Note: this assumes the scripts dir is named '/scripts'
 . "$root/scripts/lib.sh"
