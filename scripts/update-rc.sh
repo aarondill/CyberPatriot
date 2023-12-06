@@ -11,8 +11,15 @@ cd "$root"
 
 rcdir="$root/files/rc"
 for f in "$rcdir/"**; do
-  ! [ -d "$f" ] || continue                     # Skip directories
-  homepath=~/"${f#"$rcdir/"}"                   # Strip $rcdir and prefix with $HOME
+  ! [ -d "$f" ] || continue   # Skip directories
+  homepath=~/"${f#"$rcdir/"}" # Strip $rcdir and prefix with $HOME
+  if ! [ -f "$homepath" ]; then
+    err "$homepath does not exist!"
+    rm -i -- "$f"
+    dirname=$(dirname -- "$f")
+    dirname="${dirname#"$rcdir/"}"                   # ensure that we don't try to remove $rcdir
+    (cd "$rcdir" && rmdir -p "$dirname" 2>/dev/null) # Remove empty parent directories
+  fi
   if cmp -s "$f" "$homepath"; then continue; fi # Same. Skip.
   if has_cmd diff less; then
     # Show user interactive diff
