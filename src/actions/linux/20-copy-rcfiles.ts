@@ -5,11 +5,11 @@ import { fileExists, findFile, openFile, walk } from "../../util/file.js";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs/promises";
-import { getHome } from "../../util/root.js";
+import { egid, euid, getHome } from "../../util/root.js";
 import { isNodeError } from "../../util/types.js";
 import yaml from "yaml";
 import { isNativeError } from "node:util/types";
-import { $, which } from "zx";
+import { $, which, within } from "zx";
 
 async function updateCopy(home: string, root: string, rcfiles: string) {
 	if (!(await fileExists(rcfiles))) {
@@ -147,6 +147,8 @@ export async function run() {
 		const { exitCode } =
 			await $`git clone ${args} -- ${url} ${filepath}`.nothrow();
 		if (exitCode !== 0) warn(`command failed!`);
+		// Make sure that the repo has the right owner.
+		await $`chown -R ${euid}:${egid} -- ${filepath}`.nothrow();
 	}
 }
 export default run satisfies Action;
