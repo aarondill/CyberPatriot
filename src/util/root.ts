@@ -71,35 +71,13 @@ export function isRoot() {
 	return process.geteuid?.() === 0;
 }
 
-let rootCount = 0;
-const cleanup = () => {
-	rootCount--; // Ensure that serveral levels don't overwrite each other
-	if (rootCount <= 0) process.seteuid?.(euid);
-};
-
-// Sets the euid to 0 and runs cb, then resets the euid
-// Note: This keeps track of the current number of calls, and only resets the euid when that count is 0
-// It's possible that after calling this function, the euid is still 0, because there is another pending call.
-// Or because the parent of the current function has called it (root -> root == root)
+/**
+ * @deprecated
+ * A wrapper around cb(...args)
+ */
 export async function useRoot<R, A extends unknown[]>(
 	cb: (...args: A) => R | PromiseLike<R>,
 	...args: Parameters<typeof cb>
 ): Promise<ReturnType<typeof cb>> {
-	if (!process.geteuid || !process.seteuid) return await cb(...args); // Windows
-	if (assertRoot())
-		throw new Error(
-			"You must run assertRoot with a passing result before using useRoot()!"
-		);
-	rootCount++;
-	process.seteuid(0); // root escalation!
-
-	let ret;
-	try {
-		ret = await cb(...args);
-	} catch (e) {
-		cleanup();
-		throw e;
-	}
-	cleanup();
-	return ret;
+	return await cb(...args);
 }
