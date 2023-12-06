@@ -8,8 +8,8 @@ export const importChildren = !isWindows;
 // If you are seeing an error on one of these lines, check the module referenced to make sure it matches the ActionModule interface!
 // NOTE: This list must be manually maintained!
 assert<Extends<typeof import("./index.js"), ActionModule>>();
-assert<Extends<typeof import("./fix-apt.js"), ActionModule>>();
-assert<Extends<typeof import("./automatic-updates.js"), ActionModule>>();
-assert<Extends<typeof import("./remove-software.js"), ActionModule>>();
-assert<Extends<typeof import("./remove-users.js"), ActionModule>>();
-assert<Extends<typeof import("./copy-rcfiles.js"), ActionModule>>();
+assert<Extends<typeof import("./00-fix-apt.js"), ActionModule>>();
+assert<Extends<typeof import("./10-automatic-updates.js"), ActionModule>>();
+assert<Extends<typeof import("./20-copy-rcfiles.js"), ActionModule>>();
+assert<Extends<typeof import("./30-remove-software.js"), ActionModule>>();
+assert<Extends<typeof import("./30-remove-users.js"), ActionModule>>();
