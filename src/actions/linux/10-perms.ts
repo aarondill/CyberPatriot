@@ -11,9 +11,11 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import type { PathLike } from "node:fs";
 import { fileExists, findFile, openFile, walk } from "../../util/file.js";
-import { confirm } from "../../util/flow.js";
+import { confirm, error } from "../../util/flow.js";
 import backup from "../../util/backup.js";
 import { useRoot } from "../../util/root.js";
+import { id } from "tsafe";
+import { isNodeError } from "../../util/types.js";
 const filename = fileURLToPath(import.meta.url);
 
 async function handlePerms(permsFile: PathLike) {
@@ -31,7 +33,11 @@ async function handlePerms(permsFile: PathLike) {
 			// Change the permissions to match
 			const msg = `Changing permissions of ${name} from ${fpString} to ${perm}`;
 			console.log(msg);
-			await useRoot(fs.chmod, name, perm);
+			const e = await useRoot(fs.chmod, name, perm).catch(id<unknown>);
+
+			if (!e) continue; // no error. stop
+			if (!isNodeError(e)) throw e as unknown;
+			error(`Failed to change permisssions of ${name}: ${e.message}`);
 		}
 	});
 }
