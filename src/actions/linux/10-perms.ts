@@ -23,7 +23,7 @@ async function handlePerms(permsFile: PathLike) {
 	await openFile(permsFile, "r", async fd => {
 		for await (const line of fd.readLines()) {
 			const spaceI = line.indexOf(" ");
-			const perm = line.slice(0, spaceI);
+			const perm = line.slice(0, spaceI).trim();
 			const name = line.slice(spaceI + 1);
 			// Note: useRoot is not needed because stat uses UID not EUID
 			const stat = await fs.stat(name).catch(_ => null);
