@@ -28,7 +28,7 @@ async function handlePerms(permsFile: PathLike) {
 			// Note: useRoot is not needed because stat uses UID not EUID
 			const stat = await fs.stat(name).catch(_ => null);
 			if (!stat) continue; // File doesn't exist
-			const fpString = (stat.mode & parseInt("777", 8)).toString(8);
+			const fpString = (stat.mode & parseInt("7777", 8)).toString(8);
 			// If current matches desired, skip
 			if (fpString === perm) continue;
 			// Change the permissions to match
