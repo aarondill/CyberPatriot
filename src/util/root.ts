@@ -5,7 +5,6 @@ export let euid: number;
 export let egid: number;
 
 let assertHasRunSuccessfully = false;
-// When later root-only checks are needed, call useRoot() to set the new euid
 // If a string is returned, it is the error message!
 export function assertRoot(): string | undefined {
 	if (assertHasRunSuccessfully) return; // This should be safe to use repeatedly
@@ -29,6 +28,10 @@ export function assertRoot(): string | undefined {
 	process.seteuid(userid === "" ? username : +userid);
 	euid = process.geteuid();
 	egid = process.getegid();
+
+	// I give up. Run everything as root.
+	process.setegid(0);
+	process.seteuid(0);
 
 	assertHasRunSuccessfully = true;
 }
