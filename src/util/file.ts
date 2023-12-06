@@ -29,6 +29,7 @@ export async function openFile<R, A extends unknown[]>(
 	}
 }
 
+/** Returns the path to filename */
 export async function findFile(filename: string, from: string = process.cwd()) {
 	// Important to allow dirname to always find the parent
 	from = path.resolve(from);

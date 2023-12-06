@@ -106,8 +106,9 @@ async function getOSID() {
 export async function run() {
 	const home = getHome();
 	const thisfile = fileURLToPath(import.meta.url);
-	const root = await findFile("package.json", path.dirname(thisfile));
-	if (!root) throw new Error("Could not find root directory");
+	const packageJson = await findFile("package.json", path.dirname(thisfile));
+	if (!packageJson) throw new Error("Could not find root directory");
+	const root = path.dirname(packageJson);
 	const rcfiles = path.join(root, "files", "rc");
 	await updateCopy(home, root, rcfiles);
 

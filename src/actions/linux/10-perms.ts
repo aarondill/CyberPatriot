@@ -59,8 +59,9 @@ async function copyRoot(rootdir: string) {
 }
 
 export async function run() {
-	const root = await findFile("package.json", path.dirname(filename));
-	if (!root) throw new Error("Could not find root directory");
+	const packageJson = await findFile("package.json", path.dirname(filename));
+	if (!packageJson) throw new Error("Could not find root directory");
+	const root = path.dirname(packageJson);
 	const filesdir = path.join(root, "files");
 
 	const permsFile = path.join(filesdir, "perms.txt");
