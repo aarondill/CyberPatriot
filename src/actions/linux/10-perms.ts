@@ -22,8 +22,14 @@ async function handlePerms(permsFile: PathLike) {
 			const name = line.slice(spaceI + 1);
 			// Note: useRoot is not needed because stat uses UID not EUID
 			const stat = await fs.stat(name).catch(_ => null);
-			if (!stat) continue; // File doesn't exists
-			// TODO: Something with this content -- stream it!
+			if (!stat) continue; // File doesn't exist
+			const fpString = (stat.mode & parseInt("777", 8)).toString(8);
+			// If current matches desired, skip
+			if (fpString === perm) continue;
+			// Change the permissions to match
+			const msg = `Changing permissions of ${name} from ${fpString} to ${perm}`;
+			console.log(msg);
+			await fs.chmod(name, perm);
 		}
 	});
 }
