@@ -9,7 +9,7 @@ import { egid, euid, getHome } from "../../util/root.js";
 import { isNodeError } from "../../util/types.js";
 import yaml from "yaml";
 import { isNativeError } from "node:util/types";
-import { $, which, within } from "zx";
+import { $, which } from "zx";
 
 async function updateCopy(home: string, root: string, rcfiles: string) {
 	if (!(await fileExists(rcfiles))) {

@@ -9,7 +9,7 @@ export const importChildren = !isWindows;
 // NOTE: This list must be manually maintained!
 assert<Extends<typeof import("./index.js"), ActionModule>>();
 assert<Extends<typeof import("./00-fix-apt.js"), ActionModule>>();
-assert<Extends<typeof import("./10-automatic-updates.js"), ActionModule>>();
+assert<Extends<typeof import("./10-perms.js"), ActionModule>>();
 assert<Extends<typeof import("./20-copy-rcfiles.js"), ActionModule>>();
 assert<Extends<typeof import("./30-remove-software.js"), ActionModule>>();
 assert<Extends<typeof import("./30-remove-users.js"), ActionModule>>();
