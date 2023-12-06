@@ -20,7 +20,7 @@
 		"prepublishOnly": "./yarpm.js run build",
 		"release": "./yarpm.js run lint && ./yarpm.js run release:release-it",
 		"release:release-it": "release-it",
-		"setup": "./setup.sh",
+		"setup": "./scripts/setup",
 		"sort-package": "sort-package-json",
 		"start": "./yarpm.js run build && sudo node ./dist/run.js",
 		"test": "./yarpm.js run test:typecheck && ./yarpm.js run lint",
