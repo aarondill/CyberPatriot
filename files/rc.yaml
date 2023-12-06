@@ -1,0 +1,13 @@
+---
+packages:
+  # This will be installed on all platforms
+  "*": []
+  # Parsed from "id" in /etc/os-release
+  debian: []
+  ubuntu: []
+
+clone:
+  # Relative to $HOME
+  ~/.config/nvim:
+    url: "https://github.com/aarondill/LazyVim.git"
+    args: ["--filter=tree:0"]
