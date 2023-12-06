@@ -19,7 +19,8 @@ import { isNodeError } from "../../util/types.js";
 const filename = fileURLToPath(import.meta.url);
 
 async function handlePerms(permsFile: PathLike) {
-	return await openFile(permsFile, "r", async fd => {
+	const errors: string[] = [];
+	await openFile(permsFile, "r", async fd => {
 		for await (const line of fd.readLines()) {
 			const spaceI = line.indexOf(" ");
 			const perm = line.slice(0, spaceI);
@@ -37,9 +38,17 @@ async function handlePerms(permsFile: PathLike) {
 
 			if (!e) continue; // no error. stop
 			if (!isNodeError(e)) throw e as unknown;
-			error(`Failed to change permisssions of ${name}: ${e.message}`);
+			const errMessage = `Failed to change permisssions of ${name}: ${e.message}`;
+			error(errMessage);
+			errors.push(errMessage);
 		}
 	});
+	if (errors.length > 0) {
+		console.error("Congregated Errors:");
+		for (const err of errors) error(err);
+		return false;
+	}
+	return true;
 }
 
 async function copyRoot(rootdir: string) {
