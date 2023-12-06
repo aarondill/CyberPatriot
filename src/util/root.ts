@@ -25,8 +25,8 @@ export function assertRoot(): string | undefined {
 	if ((userid === "" && username === "") || gid === "")
 		return "Set $SUDO_UID or SUDO_USER to current user (should usually not be 0)";
 
+	process.setegid(+gid); // Note: this must be done before setting euid
 	process.seteuid(userid === "" ? username : +userid);
-	process.setegid(gid);
 	euid = process.geteuid();
 	egid = process.getegid();
 
