@@ -10,7 +10,7 @@ import type { Action } from "../index.js";
 import path from "node:path";
 import fs from "node:fs/promises";
 import type { PathLike } from "node:fs";
-import { cmp, fileExists, findFile, openFile, walk } from "../../util/file.js";
+import { fileExists, findFile, openFile, walk } from "../../util/file.js";
 import { confirm, error } from "../../util/flow.js";
 import backup from "../../util/backup.js";
 import { id } from "tsafe";
