@@ -34,6 +34,7 @@ import {
 	assertDynamicImport,
 	colors,
 	confirm,
+	error,
 	fileExists,
 	warn,
 } from "../util/index.js";
@@ -163,7 +164,10 @@ export async function runActions(opts: ActionOptions): Promise<boolean> {
 		if (!(await confirm(msg, true))) continue;
 
 		const suc = await action.default(opts);
-		if (suc === false) return false;
+		if (suc === false) {
+			error("Action failed!");
+			if (!(await confirm("Do you want to continue?", false))) return false;
+		}
 	}
 	console.log(colors(chalk.bold.green, "All actions completed successfully."));
 	return true;
