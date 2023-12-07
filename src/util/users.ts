@@ -1,8 +1,8 @@
 import { parse } from "node-html-parser";
 import { assert } from "tsafe";
 
-type AdminUser = { username: string; password: string };
-type Users = {
+export type AdminUser = { username: string; password: string };
+export type Users = {
 	admin: AdminUser[];
 	regular: string[];
 	all: string[]; // admin + regular
@@ -70,10 +70,11 @@ export function getUsers(html: string): Users {
 
 // const TESTING_URL = "https://www.uscyberpatriot.org/Pages/Readme/cpxvi_tr_e_ubu22_readme_s985trsq44.aspx";
 
-export async function getUsersFromURL(url: string): Promise<Users> {
+export async function getUsersFromURL(url: string | URL): Promise<Users> {
 	if (!url) throw new Error("No URL provided");
 	const res = await fetch(url);
-	if (!res.ok) throw new Error(`Could not fetch '${url}'`);
+	if (!res.ok)
+		throw new Error(`Could not fetch '${url instanceof URL ? url.href : url}'`);
 	const text = await res.text();
 	return getUsers(text);
 }
