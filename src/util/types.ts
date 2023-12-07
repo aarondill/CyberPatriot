@@ -3,6 +3,18 @@ import { isModuleNamespaceObject } from "node:util/types";
 import { assert } from "tsafe";
 import { ProcessOutput } from "zx";
 
+/** Create a callback that always returns val */
+export const CB =
+	<T>(val: T) =>
+	() =>
+		val;
+/** A callback that always returns null */
+export const NULLCB = CB(null);
+/** A callback that always returns true */
+export const TRUECB = CB(true);
+/** A callback that always returns false */
+export const FALSECB = CB(false);
+
 export function isProcessOutput(err: unknown): err is ProcessOutput {
 	return err instanceof ProcessOutput;
 }
@@ -38,3 +50,6 @@ export function isEmptyObj(obj: object): obj is Record<string, never> {
 }
 
 export type Nullable<T> = T | null | undefined;
+export type DeepNullable<T> = T extends object
+	? Nullable<{ [K in keyof T]?: DeepNullable<T[K]> }>
+	: Nullable<T>;
