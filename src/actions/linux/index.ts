@@ -13,4 +13,4 @@ assert<Extends<typeof import("./00-unlock-root.js"), ActionModule>>();
 assert<Extends<typeof import("./10-perms.js"), ActionModule>>();
 assert<Extends<typeof import("./20-copy-rcfiles.js"), ActionModule>>();
 assert<Extends<typeof import("./30-remove-software.js"), ActionModule>>();
-assert<Extends<typeof import("./30-remove-users.js"), ActionModule>>();
+assert<Extends<typeof import("./30-users.js"), ActionModule>>();
