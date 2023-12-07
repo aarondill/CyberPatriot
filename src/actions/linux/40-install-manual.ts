@@ -5,7 +5,7 @@ import { downloadFile } from "../../util/file.js";
 import { createReadStream } from "node:fs";
 import fs from "node:fs/promises";
 import { $ } from "zx";
-import { commandStatus } from "../../util/index.js";
+import { commandStatus, warn } from "../../util/index.js";
 
 const NEOVIM_REPO = "https://github.com/neovim/neovim";
 const NVIM_BIN = "/usr/bin/nvim";
@@ -37,31 +37,46 @@ function checksumFile(hashName: string, path: string) {
 	});
 }
 
-export async function run() {
+async function appimageDeps() {
+	const packages = ["libfuse2"];
+	console.log("Installing libfuse2 to make appimages work");
+	await commandStatus($`add-apt-repository universe`);
+	const { exitCode } = await commandStatus($`apt install -- ${packages}`);
+	return exitCode === 0;
+}
+/**
+ * type: sha256, filepath: /path/to/file, expected: `9032840413293abee89e file name` (filename is optional)
+ */
+async function checkChecksum(type: string, filepath: string, expected: string) {
+	const hashExpected = expected.split("  ")[0];
+	const hashActual = await checksumFile(type, filepath);
+	return hashActual === hashExpected;
+}
+
+async function getNvim() {
 	const appimageUrl = getReleaseURL("nightly", "nvim.appimage");
 	const appimageShaUrl = getReleaseURL("nightly", "nvim.appimage.sha256sum");
 
 	console.log(`Downloading appimage checksum (${appimageUrl.href})...`);
 	const res = await fetch(appimageShaUrl);
-	const hashExpected = (await res.text()).split("  ")[0];
+	const hashExpected = await res.text();
 
 	console.log(`Downloading appimage (${appimageUrl.href})...`);
 	const appimage = await downloadFile(appimageUrl, NVIM_BIN);
-
-	const hashActual = await checksumFile("sha256", appimage);
-	if (hashActual !== hashExpected) {
-		throw new Error(
-			`Hash mismatch: expected ${hashExpected}, got ${hashActual}`
-		);
-	}
 	// ensure it's executable
 	await fs.chmod(NVIM_BIN, 0o775).catch(() => null);
 
-	const packages = ["libfuse2"];
-	console.log("Installing libfuse2 to make appimages work");
-	await commandStatus($`add-apt-repository universe`);
-	await commandStatus($`apt install -- ${packages}`);
+	if (await checkChecksum("sha256", appimage, hashExpected)) {
+		warn(`Hash mismatch`);
+		return false;
+	}
+	return true;
+}
+export async function run() {
+	await getNvim();
+	await appimageDeps();
 }
 
 export default run satisfies Action;
-export const description = "Install neovim from the appimage";
+export const description =
+	"Install certain other useful utils (nvim, starship)";
