@@ -20,6 +20,7 @@ async function ensureBackupDirectory() {
 
 // Backup src to BACKUP_DIR
 export async function backup(src: string): Promise<boolean> {
+	if (!(await fileExists(src))) return true; // The file to backup doesn't exist. Don't do anything.
 	const dest = await ensureBackupDirectory();
 	const newDest = path.join(dest, src);
 	if (await fileExists(newDest))
