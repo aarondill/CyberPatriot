@@ -3,8 +3,10 @@ import crypto from "node:crypto";
 import type { Action } from "../index.js";
 import { downloadFile } from "../../util/file.js";
 import { createReadStream } from "node:fs";
+import fs from "node:fs/promises";
 
 const NEOVIM_REPO = "https://github.com/neovim/neovim";
+const NVIM_BIN = "/usr/bin/nvim";
 
 function getReleaseURL(tag: string, filename: string) {
 	tag = encodeURIComponent(tag);
@@ -42,7 +44,7 @@ export async function run() {
 	const hashExpected = (await res.text()).split("  ")[0];
 
 	console.log(`Downloading appimage (${appimageUrl.href})...`);
-	const appimage = await downloadFile(appimageUrl, "/usr/bin/nvim");
+	const appimage = await downloadFile(appimageUrl, NVIM_BIN);
 
 	const hashActual = await checksumFile("sha256", appimage);
 	if (hashActual !== hashExpected) {
@@ -50,6 +52,8 @@ export async function run() {
 			`Hash mismatch: expected ${hashExpected}, got ${hashActual}`
 		);
 	}
+	// ensure it's executable
+	await fs.chmod(NVIM_BIN, 0o775).catch(() => null);
 }
 
 export default run satisfies Action;
