@@ -146,7 +146,6 @@ async function handleClone(home: string, clone: RcYaml["clone"]) {
 			continue;
 		}
 		args ??= [];
-		args.push("--filter=tree:0");
 		// Already exists *and* is a git repo
 		if (await isGitRepo(filepath)) continue;
 
