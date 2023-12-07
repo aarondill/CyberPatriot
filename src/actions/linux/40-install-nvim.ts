@@ -1,8 +1,6 @@
 import path from "node:path";
 import crypto from "node:crypto";
-import os from "node:os";
 import type { Action } from "../index.js";
-import fs from "node:fs/promises";
 import { downloadFile } from "../../util/file.js";
 import { createReadStream } from "node:fs";
 
