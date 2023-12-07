@@ -25,7 +25,7 @@ async function updateApt(apt: string) {
 }
 
 // TODO: make this work with debian
-const repoRegex = /^(#%s*)?deb https?:\/\/.*\.ubuntu\.com\/ubuntu /;
+const repoRegex = /^(#\s*)?deb http/;
 async function fixApt() {
 	const apt = await which("apt", { nothrow: true });
 	if (!apt) return error("Could not find apt!");
@@ -47,7 +47,7 @@ async function fixApt() {
 		// Note the trailing space!
 		// Remove comment and whitespace
 		if (line.match(repoRegex))
-			return line.startsWith("#") ? line.replace(/^# /, "") : line;
+			return line.startsWith("#") ? line.replace(/^#+ /, "") : line;
 
 		if (line.startsWith("#")) return line; // keep comments
 		return `# ${line}`; // Comment all other entries
