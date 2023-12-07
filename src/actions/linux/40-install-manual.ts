@@ -39,6 +39,11 @@ function checksumFile(hashName: string, path: string) {
 
 async function appimageDeps() {
 	const packages = ["libfuse2"];
+	const alreadyInstalled = await $`dpkg-query -s -- ${packages}`
+		.nothrow()
+		.quiet()
+		.stdio("ignore", "ignore", "ignore").exitCode;
+	if (alreadyInstalled === 0) return;
 	console.log("Installing libfuse2 to make appimages work");
 	await commandStatus($`add-apt-repository universe`);
 	const { exitCode } = await commandStatus($`apt install -- ${packages}`);
