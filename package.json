@@ -1,52 +1,52 @@
 {
-  "name": "cyberpatriot",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Scripts for CyberPatriot",
-  "repository": "https://github.com/aarondill/CyberPatriot",
-  "license": "MIT",
-  "author": "aarondill <aaronsacks2006@gmail.com>",
-  "type": "module",
-  "main": "dist/run.js",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "./yarpm.js run tsc:build",
-    "clean": "rimraf dist",
-    "lint": "./yarpm.js run lint:eslint && ./yarpm.js run lint:prettier && ./yarpm.js run sort-package",
-    "lint:eslint": "eslint . --fix --cache --ext .js,.ts,.mjs,.mts,.cjs,.cts,.tsx,.jsx",
-    "lint:prettier": "prettier . --write --cache --log-level warn",
-    "prepublishOnly": "./yarpm.js run build",
-    "setup": "./scripts/setup",
-    "sort-package": "sort-package-json",
-    "start": "./yarpm.js run build && sudo node ./dist/run.js",
-    "test": "./yarpm.js run test:typecheck && ./yarpm.js run lint",
-    "test:typecheck": "tsc -p ./tsconfig.eslint.json --noEmit --skipLibCheck",
-    "tsc:build": "./yarpm.js run clean && tsc --build",
-    "tsc:watch": "./yarpm.js run clean && tsc --watch",
-    "watch": "./yarpm.js run lint && ./yarpm.js run tsc:watch"
-  },
-  "dependencies": {
-    "@types/js-yaml": "^4.0.9",
-    "js-yaml": "^4.1.0",
-    "n": "^9.2.0",
-    "node-html-parser": "^6.1.11",
-    "zx": "^7.2.3"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^2.1.4",
-    "@types/node": "^20.10.3",
-    "@typescript-eslint/eslint-plugin": "^6.13.2",
-    "@typescript-eslint/parser": "^6.13.2",
-    "eslint": "^8.55.0",
-    "prettier": "^3.1.0",
-    "rimraf": "^5.0.5",
-    "sort-package-json": "^2.6.0",
-    "tsafe": "^1.6.5",
-    "typescript": "^5.3.2"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+	"name": "cyberpatriot",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Scripts for CyberPatriot",
+	"repository": "https://github.com/aarondill/CyberPatriot",
+	"license": "MIT",
+	"author": "aarondill <aaronsacks2006@gmail.com>",
+	"type": "module",
+	"main": "dist/run.js",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "./yarpm.js run tsc:build",
+		"clean": "rimraf dist",
+		"lint": "./yarpm.js run lint:eslint && ./yarpm.js run lint:prettier && ./yarpm.js run sort-package",
+		"lint:eslint": "eslint . --fix --cache --ext .js,.ts,.mjs,.mts,.cjs,.cts,.tsx,.jsx",
+		"lint:prettier": "prettier . --write --cache --log-level warn",
+		"prepublishOnly": "./yarpm.js run build",
+		"setup": "./scripts/setup",
+		"sort-package": "sort-package-json",
+		"start": "./yarpm.js run build && sudo node ./dist/run.js",
+		"test": "./yarpm.js run test:typecheck && ./yarpm.js run lint",
+		"test:typecheck": "tsc -p ./tsconfig.eslint.json --noEmit --skipLibCheck",
+		"tsc:build": "./yarpm.js run clean && tsc --build",
+		"tsc:watch": "./yarpm.js run clean && tsc --watch",
+		"watch": "./yarpm.js run lint && ./yarpm.js run tsc:watch"
+	},
+	"dependencies": {
+		"@types/js-yaml": "^4.0.9",
+		"js-yaml": "^4.1.0",
+		"n": "^9.2.0",
+		"node-html-parser": "^6.1.11",
+		"zx": "^7.2.3"
+	},
+	"devDependencies": {
+		"@eslint/eslintrc": "^2.1.4",
+		"@types/node": "^20.10.3",
+		"@typescript-eslint/eslint-plugin": "^6.13.2",
+		"@typescript-eslint/parser": "^6.13.2",
+		"eslint": "^8.55.0",
+		"prettier": "^3.1.0",
+		"rimraf": "^5.0.5",
+		"sort-package-json": "^2.6.0",
+		"tsafe": "^1.6.5",
+		"typescript": "^5.3.2"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
 }
