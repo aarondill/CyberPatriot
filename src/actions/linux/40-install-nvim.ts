@@ -4,6 +4,8 @@ import type { Action } from "../index.js";
 import { downloadFile } from "../../util/file.js";
 import { createReadStream } from "node:fs";
 import fs from "node:fs/promises";
+import { $ } from "zx";
+import { commandStatus } from "../../util/index.js";
 
 const NEOVIM_REPO = "https://github.com/neovim/neovim";
 const NVIM_BIN = "/usr/bin/nvim";
@@ -54,6 +56,11 @@ export async function run() {
 	}
 	// ensure it's executable
 	await fs.chmod(NVIM_BIN, 0o775).catch(() => null);
+
+	const packages = ["libfuse2"];
+	console.log("Installing libfuse2 to make appimages work");
+	await commandStatus($`add-apt-repository universe`);
+	await commandStatus($`apt install -- ${packages}`);
 }
 
 export default run satisfies Action;
