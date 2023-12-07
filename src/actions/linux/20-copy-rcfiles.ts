@@ -104,32 +104,26 @@ async function getOSID() {
 	return id ?? "linux";
 }
 
-export async function run() {
-	const home = getHome();
-	const thisfile = fileURLToPath(import.meta.url);
-	const packageJson = await findFile("package.json", path.dirname(thisfile));
-	if (!packageJson) throw new Error("Could not find root directory");
-	const root = path.dirname(packageJson);
-	const rcfiles = path.join(root, "files", "rc");
-	await updateCopy(home, root, rcfiles);
+async function handlePackages(packages: RcYaml["packages"]) {
+	const osid = await getOSID();
+	if (!packages) return true;
+	const packageList = [];
+	const distro = packages[osid];
+	if (packages["*"]) packageList.push(...packages["*"]);
+	if (distro) packageList.push(...distro);
 
-	const rcyaml = path.join(root, "files", "rc.yaml");
-	const config = (await parseYaml(rcyaml)) as RcYaml; // just assert it. I don't feel like doing this right now.
-	if (!config) return;
-	const id = await getOSID();
-	const { packages, clone } = config;
-	// Install the listed packages!
-	if (packages) {
-		const packageList = [];
-		const distro = packages[id];
-		if (packages["*"]) packageList.push(...packages["*"]);
-		if (distro) packageList.push(...distro);
+	const suc = await installPackages(...packageList);
+	if (suc === false) return false;
+}
+async function handleClone(home: string, clone: RcYaml["clone"]) {
+	if (!clone) return;
+	const entries = Object.entries(clone);
+	if (entries.length === 0) return; // empty object, return
 
-		const suc = await installPackages(...packageList);
-		if (suc === false) return false;
-	}
+	const git = await which("git", { nothrow: true });
+	if (!git) return error(`Could not find git! git is required to clone repos!`);
 
-	for (const [tpath, options] of Object.entries(clone ?? {})) {
+	for (const [tpath, options] of entries) {
 		// Permit tilde-expansion of the path.
 		const tildeReplaced = tpath.startsWith("~/")
 			? path.join(home, tpath.slice(2))
@@ -146,13 +140,33 @@ export async function run() {
 		args ??= [];
 		args.push("--filter=tree:0");
 		// Already exists *and* is a git repo
-		if ((await $`git -C ${filepath} rev-parse`.exitCode) === 0) continue;
+		if ((await $`${git} -C ${filepath} rev-parse`.exitCode) === 0) continue;
 		const { exitCode } =
-			await $`git clone ${args} -- ${url} ${filepath}`.nothrow();
+			await $`${git} clone ${args} -- ${url} ${filepath}`.nothrow();
 		if (exitCode !== 0) warn(`command failed!`);
 		// Make sure that the repo has the right owner.
 		await $`chown -R ${euid}:${egid} -- ${filepath}`.nothrow();
 	}
+}
+
+export async function run() {
+	const home = getHome();
+	const thisfile = fileURLToPath(import.meta.url);
+	const packageJson = await findFile("package.json", path.dirname(thisfile));
+	if (!packageJson) throw new Error("Could not find root directory");
+	const root = path.dirname(packageJson);
+	const rcfiles = path.join(root, "files", "rc");
+	await updateCopy(home, root, rcfiles);
+
+	const rcyaml = path.join(root, "files", "rc.yaml");
+	const config = (await parseYaml(rcyaml)) as RcYaml; // just assert it. I don't feel like doing this right now.
+	if (!config) return;
+	const { packages, clone } = config;
+	// Install the listed packages!
+	const packagesRes = await handlePackages(packages);
+	if (packagesRes === false) return false;
+	const cloneRes = await handleClone(home, clone);
+	if (cloneRes === false) return false;
 }
 export default run satisfies Action;
 export const description = "Copy common config to the VM and install packages.";
