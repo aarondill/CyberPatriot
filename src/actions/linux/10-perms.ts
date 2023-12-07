@@ -10,10 +10,9 @@ import type { Action } from "../index.js";
 import path from "node:path";
 import fs from "node:fs/promises";
 import type { PathLike } from "node:fs";
-import { fileExists, findFile, openFile, walk } from "../../util/file.js";
+import { cmp, fileExists, findFile, openFile, walk } from "../../util/file.js";
 import { confirm, error } from "../../util/flow.js";
 import backup from "../../util/backup.js";
-import { useRoot } from "../../util/root.js";
 import { id } from "tsafe";
 import { isNodeError } from "../../util/types.js";
 const filename = fileURLToPath(import.meta.url);
@@ -25,7 +24,6 @@ async function handlePerms(permsFile: PathLike) {
 			const spaceI = line.indexOf(" ");
 			const perm = line.slice(0, spaceI).trim();
 			const name = line.slice(spaceI + 1);
-			// Note: useRoot is not needed because stat uses UID not EUID
 			const stat = await fs.stat(name).catch(_ => null);
 			if (!stat) continue; // File doesn't exist
 			const fpString = (stat.mode & parseInt("7777", 8)).toString(8);
@@ -34,7 +32,7 @@ async function handlePerms(permsFile: PathLike) {
 			// Change the permissions to match
 			const msg = `Changing permissions of ${name} from ${fpString} to ${perm}`;
 			console.log(msg);
-			const e = await useRoot(fs.chmod, name, perm).catch(id<unknown>);
+			const e = await fs.chmod(name, perm).catch(id<unknown>);
 
 			if (!e) continue; // no error. stop
 			if (!isNodeError(e)) throw e as unknown;
@@ -61,13 +59,13 @@ async function copyRoot(rootdir: string) {
 		const rel = path.relative(rootdir, file);
 		const dest = path.join("/", rel);
 		const destDir = path.dirname(dest);
-		if (await fileExists(dest)) {
+		if ((await fileExists(dest)) && !(await cmp(file, dest))) {
 			const conf = await confirm(`overwrite ${dest}?`, true);
 			if (!conf) continue;
 		}
 		await fs.mkdir(destDir, { recursive: true });
 		await backup(dest);
-		await useRoot(fs.copyFile, file, dest);
+		await fs.copyFile(file, dest);
 	}
 
 	// Do this *AFTER* copying the root folder
