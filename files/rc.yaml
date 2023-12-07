@@ -1,7 +1,7 @@
 ---
 packages:
   # This will be installed on all platforms
-  "*": []
+  "*": ["git", "curl", "bat"]
   # Parsed from "id" in /etc/os-release
   debian: []
   ubuntu: []
