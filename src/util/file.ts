@@ -1,15 +1,146 @@
 import type { Mode, PathLike } from "node:fs";
+import { Stats } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
 import fs from "node:fs/promises";
 import { FALSECB, TRUECB } from "./types.js";
 import path from "node:path";
-import type { Parameters } from "tsafe";
+import { objectEntries, type Parameters } from "tsafe";
 
 export function fileAccess(...args: Parameters<typeof fs.access>) {
 	return fs.access(...args).then(TRUECB, FALSECB);
 }
 export async function fileExists(file: PathLike) {
 	return await fileAccess(file, fs.constants.F_OK);
+}
+/** The possible return types of fileType */
+export type FileType =
+	| "file"
+	| "directory"
+	| "link"
+	| "block"
+	| "character"
+	| "fifo"
+	| "socket"
+	| "unknown";
+
+/** A set of methods needed to be implemented while checking Stats file type */
+type FileTypeMethods<T> = {
+	[K in keyof T]: T[K] extends () => boolean
+		? K extends `is${string}`
+			? K
+			: never
+		: never;
+}[keyof T];
+
+/** null if the file can't be accessed */
+export async function fileType(file: PathLike): Promise<FileType | null>;
+/** This can't be null, since the user passed the stats */
+export async function fileType(file: Stats): Promise<FileType>;
+/** Returns a string describing the type of file */
+export async function fileType(file: PathLike | Stats): Promise<FileType> {
+	const stats = file instanceof Stats ? file : await fs.lstat(file);
+	const methods: Record<FileTypeMethods<Stats>, FileType> = {
+		isDirectory: "directory",
+		isFile: "file",
+		isSymbolicLink: "link",
+		isBlockDevice: "block",
+		isCharacterDevice: "character",
+		isFIFO: "fifo",
+		isSocket: "socket",
+	} as const;
+	for (const [method, type] of objectEntries(methods)) {
+		const isType = stats[method];
+		if (isType()) return type;
+	}
+	if (stats.isDirectory()) return "directory";
+	if (stats.isFile()) return "file";
+	if (stats.isSymbolicLink()) return "link";
+	if (stats.isCharacterDevice()) return "character";
+	if (stats.isBlockDevice()) return "block";
+	if (stats.isFIFO()) return "fifo";
+	if (stats.isSocket()) return "socket";
+	return "unknown";
+}
+
+async function normalizeStat(
+	file: PathLike | Stats | FileHandle
+): Promise<Stats> {
+	if (file instanceof Stats) return file;
+	if (typeof file === "object" && "stat" in file) return await file.stat();
+	return await fs.lstat(file);
+}
+// Note: this doesn't close the FileHandles
+// Call stat and pass size. Check that it's equal before hand!
+async function compareFiles(h1: FileHandle, h2: FileHandle, size: number) {
+	const kReadSize = 1024 * 8;
+	const buf1 = Buffer.alloc(kReadSize),
+		buf2 = Buffer.alloc(kReadSize);
+	let pos = 0;
+	let remainingSize = size;
+	while (remainingSize > 0) {
+		const readSize = Math.min(kReadSize, remainingSize);
+		const [r1, r2] = await Promise.all([
+			h1.read(buf1, 0, readSize, pos),
+			h2.read(buf2, 0, readSize, pos),
+		]);
+		if (r1.bytesRead !== readSize || r2.bytesRead !== readSize) {
+			throw new Error("Failed to read desired number of bytes");
+		}
+		if (buf1.compare(buf2, 0, readSize, 0, readSize) !== 0) {
+			return false;
+		}
+		remainingSize -= readSize;
+		pos += readSize;
+	}
+	return true;
+}
+/**
+ * Check if two files are the same
+ * if opts.metadata is true, also check the file metadata -- mode, uid, gid
+ * This may throw if a path is passed that is not accessable
+ */
+export async function cmp(
+	a: PathLike,
+	b: PathLike,
+	{ metadata = true, contents = true } = {}
+): Promise<boolean> {
+	const statA = await normalizeStat(a),
+		statB = await normalizeStat(b);
+	// The filetype is different - exit early
+	// The files can't be equal in metadata or contents
+	if (fileType(statA) !== fileType(statB)) return false;
+
+	// Only check mode, uid, and gid if metadata is true
+	if (metadata) {
+		const compare = ["mode", "uid", "gid"] as const;
+		for (const key of compare) {
+			if (statA[key] !== statB[key]) return false;
+		}
+	}
+
+	// Only check the actual contents if contents is true
+	if (contents) {
+		// Check the size first. if they are different, the content is different.
+		if (statA.size !== statB.size) return false;
+
+		let h1, h2;
+		try {
+			const res = await Promise.allSettled([fs.open(a, "r"), fs.open(b, "r")]);
+			// Get the values. This allows us to close any successfully opened handles.
+			[h1, h2] = res.map(v => (v.status === "fulfilled" ? v.value : undefined));
+			// If either rejected, throw an error
+			const failed = res.find(v => v.status === "rejected");
+			if (failed && failed.status === "rejected") throw failed.reason; // Throws the first failed promise.
+
+			h1 = await fs.open(a, "r");
+			h2 = await fs.open(b, "r");
+			if (!(await compareFiles(h1, h2, statA.size))) return false;
+		} finally {
+			await h1?.close();
+			await h2?.close();
+		}
+	}
+	return true;
 }
 
 export async function openFile<R, A extends unknown[]>(
