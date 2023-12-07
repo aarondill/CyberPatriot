@@ -155,7 +155,10 @@ export async function runActions(opts: ActionOptions): Promise<boolean> {
 		if (!action) continue;
 		if (action.disabled) continue;
 		console.log(); // Place spacing
-		const descColor = colors(chalk.yellow, action.description ?? filepath);
+		const descColor = colors(
+			chalk.blueBright.bold,
+			action.description ?? filepath
+		);
 		const msg = `run action '${descColor}'`;
 		if (!(await confirm(msg, true))) continue;
 
