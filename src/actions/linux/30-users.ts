@@ -11,6 +11,7 @@ import {
 import type { AdminUser } from "../../util/users.js";
 import { getUsersFromURL } from "../../util/users.js";
 import type { Action } from "../index.js";
+import { isNativeError } from "util/types";
 
 // for await (const [username, uid] of getNonSystemUsers())
 async function* getNonSystemUsers(): AsyncGenerator<[string, number]> {
@@ -111,10 +112,22 @@ async function setPasswords(admin: AdminUser[]) {
 }
 
 export async function run() {
-	const url = await getURL("What is the URL of the readme? ");
-	if (!url) return true; // abort -- empty input
-
-	const permittedUsers = await getUsersFromURL(url);
+	let permittedUsers;
+	while (!permittedUsers) {
+		const url = await getURL("What is the URL of the readme? ");
+		if (!url) return true; // abort -- empty input
+		try {
+			permittedUsers = await getUsersFromURL(url);
+		} catch (e) {
+			error(
+				`Failed to get users from URL. Error: ${
+					isNativeError(e) ? e.message : String(e)
+				}`
+			);
+			error("Check your spelling and internet connection and try again.");
+			permittedUsers = undefined;
+		}
+	}
 	const foundUsers = await removeNonPermittedUsers(permittedUsers.all);
 
 	await addMissingUsers(permittedUsers.all, foundUsers);

@@ -74,7 +74,11 @@ export async function getUsersFromURL(url: string | URL): Promise<Users> {
 	if (!url) throw new Error("No URL provided");
 	const res = await fetch(url);
 	if (!res.ok)
-		throw new Error(`Could not fetch '${url instanceof URL ? url.href : url}'`);
+		throw new Error(
+			`Could not fetch '${url instanceof URL ? url.href : url}': ${
+				res.status
+			} ${res.statusText}`
+		);
 	const text = await res.text();
 	return getUsers(text);
 }
