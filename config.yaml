@@ -1,8 +1,8 @@
 ---
 packages:
   # This will be installed on all platforms
-  "*": ["git", "curl", "bat"]
-  # Parsed from "id" in /etc/os-release
+  "*": ["git", "curl", "bat", "gcc"]
+  # Parsed from "id" in /etc/os-release -- Appended to *
   debian: []
   ubuntu: []
 
