@@ -71,7 +71,7 @@ async function getNvim() {
 		appimage,
 		hashFileContent
 	);
-	if (matches) {
+	if (!matches) {
 		warn(`Hash mismatch. Expected ${hashExpected} but got ${actual}`);
 		return false;
 	}
