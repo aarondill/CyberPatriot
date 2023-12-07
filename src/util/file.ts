@@ -50,7 +50,7 @@ export async function fileType(file: PathLike | Stats): Promise<FileType> {
 	} as const;
 	for (const [method, type] of objectEntries(methods)) {
 		const isType = stats[method];
-		if (isType()) return type;
+		if (isType.call(stats)) return type;
 	}
 	if (stats.isDirectory()) return "directory";
 	if (stats.isFile()) return "file";
