@@ -48,9 +48,9 @@ async function appimageDeps() {
  * type: sha256, filepath: /path/to/file, expected: `9032840413293abee89e file name` (filename is optional)
  */
 async function checkChecksum(type: string, filepath: string, expected: string) {
-	const hashExpected = expected.split("  ")[0];
+	const hashExpected = expected.split(/\s+/)[0];
 	const hashActual = await checksumFile(type, filepath);
-	return [hashActual === hashExpected, hashActual];
+	return [hashActual === hashExpected, hashActual, hashExpected];
 }
 
 async function getNvim() {
@@ -59,17 +59,17 @@ async function getNvim() {
 
 	console.log(`Downloading appimage checksum (${appimageUrl.href})...`);
 	const res = await fetch(appimageShaUrl);
-	const hashExpected = await res.text();
+	const hashFileContent = await res.text();
 
 	console.log(`Downloading appimage (${appimageUrl.href})...`);
 	const appimage = await downloadFile(appimageUrl, NVIM_BIN);
 	// ensure it's executable
 	await fs.chmod(NVIM_BIN, 0o775).catch(() => null);
 
-	const [matches, actual] = await checkChecksum(
+	const [matches, actual, hashExpected] = await checkChecksum(
 		"sha256",
 		appimage,
-		hashExpected
+		hashFileContent
 	);
 	if (matches) {
 		warn(`Hash mismatch. Expected ${hashExpected} but got ${actual}`);
