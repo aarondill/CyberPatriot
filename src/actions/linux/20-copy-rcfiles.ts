@@ -71,6 +71,7 @@ export async function parseYaml(rc: string): Promise<object | undefined> {
 }
 
 async function installPackages(...packages: string[]) {
+	if (packages.length === 0) return; // If no packages are specified, do nothing.
 	const apt = await which("apt", { nothrow: true });
 	if (!apt) {
 		const thisfile = path.basename(fileURLToPath(import.meta.url));
