@@ -111,8 +111,23 @@ async function setPasswords(admin: AdminUser[]) {
 	}
 }
 
+// function USERS_DEBUG() {
+// 	warn("DEBUG USERS are being used for testing!");
+// 	const admins = ["admin1", "admin2", "admin3"];
+// 	const regulars = ["regular1", "regular2", "regular3"];
+// 	const res: Users = {
+// 		admin: admins.map(u => ({ username: u, password: "<PASSWORD>" })),
+// 		regular: regulars,
+// 		all: admins.concat(regulars),
+// 	};
+// 	res.regular.sort((a, b) => a.localeCompare(b));
+// 	res.all.sort((a, b) => a.localeCompare(b));
+// 	res.admin.sort((a, b) => a.username.localeCompare(b.username));
+// 	return res;
+// }
 export async function run() {
 	let permittedUsers;
+	// permittedUsers = USERS_DEBUG();
 	while (!permittedUsers) {
 		const url = await getURL("What is the URL of the readme? ");
 		if (!url) return true; // abort -- empty input
