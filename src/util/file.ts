@@ -2,11 +2,12 @@ import type { Mode, PathLike } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
 import fs from "node:fs/promises";
 import { isNodeError } from "./types.js";
-import path from "node:path";
+import path, { dirname } from "node:path";
 import type { Parameters } from "tsafe";
 import https from "node:https";
 import http from "node:http";
 import { createWriteStream } from "node:fs";
+import { $, which } from "zx";
 
 export async function fileAccess(...args: Parameters<typeof fs.access>) {
 	try {
@@ -68,52 +69,22 @@ export async function* walk(
 	}
 }
 
-interface DownloadFileOptions extends http.RequestOptions {
-	// Timeout in milliseconds. Zero means no timeout.
-	timeout?: number;
-	// If undefined, defaults to current working directory.
-	output?: string;
-}
+export async function downloadFile(url: URL, dest: string | null) {
+	const destPath = dest ?? path.basename(url.pathname);
+	const { href } = url;
 
-// Note: This does not remove the file on failure
-export function downloadFile(url: URL, options: DownloadFileOptions = {}) {
-	type Ret = string;
-	let _resolve: (v: Ret) => void, _reject: (e: Error) => void;
-	const _value = new Promise<Ret>(
-		(resolve, reject) => ((_resolve = resolve), (_reject = reject))
-	);
+	await fs.mkdir(path.dirname(destPath), { recursive: true });
+	const curl = await which("curl", { nothrow: true });
+	if (curl) {
+		// This will throw an error if the command fails
+		await $`${curl} -SsfL -o ${destPath} -- ${href}`;
+		return destPath;
+	}
 
-	const timeout = options.timeout ?? 0;
-	// Download to current directory if null
-	const output = options.output ?? path.posix.basename(url.pathname);
-
-	const req = url.protocol === "https:" ? https : http;
-	const request = req.get(url, options, async res => {
-		const { statusCode } = res;
-		const ok = statusCode && statusCode >= 200 && statusCode <= 299;
-		if (!ok)
-			return _reject(
-				new Error(`Unexpected status code: ${statusCode}`, {
-					cause: { statusCode },
-				})
-			);
-		// Do something with res
-		const dir = path.dirname(output);
-		await fs.mkdir(dir, { recursive: true });
-		const file = createWriteStream(output);
-		res.pipe(file);
-
-		res.on("end", () => _resolve(output));
-	});
-
-	request.setTimeout(timeout, () => {
-		request.end();
-		_reject(
-			new Error(`Download timed out after ${timeout}ms`, {
-				cause: { timeout },
-			})
-		);
-	});
-	request.on("error", err => _reject(err));
-	return _value;
+	const wget = await which("wget", { nothrow: true });
+	if (wget) {
+		// This will throw an error if the command fails
+		await $`${wget} -q -o ${destPath} -- ${href}`;
+		return destPath;
+	}
 }
