@@ -155,10 +155,8 @@ export async function runActions(opts: ActionOptions): Promise<boolean> {
 		if (!action) continue;
 		if (action.disabled) continue;
 		console.log(); // Place spacing
-		const msg = colors(
-			chalk.yellow,
-			`run action '${action.description ?? filepath}'`
-		);
+		const descColor = colors(chalk.yellow, action.description ?? filepath);
+		const msg = `run action '${descColor}'`;
 		if (!(await confirm(msg, true))) continue;
 
 		const suc = await action.default(opts);
