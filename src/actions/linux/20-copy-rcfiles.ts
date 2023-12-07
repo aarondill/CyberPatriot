@@ -115,6 +115,14 @@ async function handlePackages(packages: RcYaml["packages"]) {
 	const suc = await installPackages(...packageList);
 	if (suc === false) return false;
 }
+
+async function isGitRepo(path: string) {
+	const stat = await fs.stat(path).catch(() => null);
+	if (!stat) return false;
+	if (!stat.isDirectory()) return false;
+	const { exitCode } = await $`git -C ${path} rev-parse`.quiet().nothrow();
+	return exitCode === 0;
+}
 async function handleClone(home: string, clone: RcYaml["clone"]) {
 	if (!clone) return;
 	const entries = Object.entries(clone);
@@ -140,7 +148,8 @@ async function handleClone(home: string, clone: RcYaml["clone"]) {
 		args ??= [];
 		args.push("--filter=tree:0");
 		// Already exists *and* is a git repo
-		if ((await $`${git} -C ${filepath} rev-parse`.exitCode) === 0) continue;
+		if (await isGitRepo(filepath)) continue;
+
 		const { exitCode } =
 			await $`${git} clone ${args} -- ${url} ${filepath}`.nothrow();
 		if (exitCode !== 0) warn(`command failed!`);
