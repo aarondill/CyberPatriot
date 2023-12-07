@@ -1,12 +1,18 @@
 // Note: this is proper use of void because it's used for the function return
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 export type ActionRet = boolean | undefined | null | void;
+export type ActionOptions = {
+	args: string[];
+	config: YamlConfig;
+	root: string;
+	home: string;
+};
 /**
  * The return value should be considered success.
  * If false is returned, the function failed.
  * Otherwise, the function was successful.
  */
-export type Action = (argv: string[]) => Promise<ActionRet> | ActionRet;
+export type Action = (opts: ActionOptions) => Promise<ActionRet> | ActionRet;
 // This type is only permitted in index.js files (they may include only export importChildren)
 export type ActionModuleIndexJS = {
 	importChildren: boolean;
@@ -33,6 +39,7 @@ import {
 } from "../util/index.js";
 import { assert, is, typeGuard } from "tsafe";
 import { chalk } from "zx";
+import type { YamlConfig } from "../config.js";
 
 // Returns a string that can be used to import() actions
 // thisfile is used for recursive imports
@@ -142,7 +149,7 @@ async function importAction(
 	} satisfies ActionModuleOthers;
 }
 
-export async function runActions(args: string[]): Promise<boolean> {
+export async function runActions(opts: ActionOptions): Promise<boolean> {
 	for await (const filepath of getActionList()) {
 		const action = await importAction(filepath);
 		if (!action) continue;
@@ -150,7 +157,7 @@ export async function runActions(args: string[]): Promise<boolean> {
 		const msg = `run action '${action.description ?? filepath}'`;
 		if (!(await confirm(msg, true))) continue;
 
-		const suc = await action.default(args);
+		const suc = await action.default(opts);
 		if (suc === false) return false;
 	}
 	console.log(colors(chalk.bold.green, "All actions completed successfully."));

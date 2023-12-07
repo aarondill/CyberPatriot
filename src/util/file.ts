@@ -46,6 +46,7 @@ export async function findFile(filename: string, from: string = process.cwd()) {
 		from = dirname; // next iteration use the parent directory
 	}
 }
+
 /**
  * Recursively walks the directory tree and yields all files and (optionally) directories
  * All returned paths are absolute paths.

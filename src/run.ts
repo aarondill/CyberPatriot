@@ -21,10 +21,14 @@ import {
 	warn,
 	isWindows,
 	assertRoot,
+	findFile,
+	getHome,
 } from "./util/index.js";
 import { hostname, userInfo } from "node:os";
 import path from "node:path";
 import { runActions } from "./actions/index.js";
+import { parseConfig } from "./config.js";
+import { fileURLToPath } from "node:url";
 
 $.prefix = "set -euC -o pipefail;";
 // Check $.shell before running which.sync
@@ -43,9 +47,19 @@ async function main(args: string[]) {
 	const msg = `run the script on this machine (${username}:${hostname()})`;
 	if (!(await confirm(msg, false))) return abort(null, 1);
 
-	await runActions(args);
+	const thisfile = fileURLToPath(import.meta.url);
+	const packageJson = await findFile("package.json", path.dirname(thisfile));
+	if (!packageJson) throw new Error("Could not find root directory");
 
-	return 0;
+	const root = path.dirname(packageJson);
+	const config = await parseConfig(root);
+	const suc = await runActions({
+		args,
+		config,
+		root,
+		home: getHome(),
+	});
+	return suc === false ? 1 : 0;
 }
 
 void Promise.resolve(main(process.argv.slice(2))).then(

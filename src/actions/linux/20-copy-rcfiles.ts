@@ -1,15 +1,14 @@
-import { backup, error, warn } from "../../util/index.js";
-import type { Action } from "../index.js";
+import { backup, commandStatus, error, warn } from "../../util/index.js";
+import type { Action, ActionOptions } from "../index.js";
 import { id } from "tsafe";
-import { fileExists, findFile, openFile, walk } from "../../util/file.js";
+import { fileExists, openFile, walk } from "../../util/file.js";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs/promises";
-import { egid, euid, getHome } from "../../util/root.js";
+import { egid, euid } from "../../util/root.js";
 import { isNodeError } from "../../util/types.js";
-import yaml from "yaml";
-import { isNativeError } from "node:util/types";
 import { $, which } from "zx";
+import type { YamlConfig } from "../../config.js";
 
 async function updateCopy(home: string, root: string, rcfiles: string) {
 	if (!(await fileExists(rcfiles))) {
@@ -29,47 +28,6 @@ async function updateCopy(home: string, root: string, rcfiles: string) {
 	}
 }
 
-type CloneOptions = {
-	url: string;
-	// Options for the git clone command.
-	args?: null | string[];
-};
-type RcYaml = Partial<{
-	packages?: null | {
-		// Special case
-		"*"?: null | string[];
-		// id parsed from /etc/os-release
-		[id: string]: undefined | null | string[];
-	};
-	clone?: null | {
-		[path: string]: undefined | null | CloneOptions;
-	};
-}>;
-
-export async function parseYaml(rc: string): Promise<object | undefined> {
-	const content = await fs.readFile(rc, { encoding: "utf8" }).catch(e => {
-		if (!isNodeError(e)) throw e;
-		return null;
-	});
-	if (!content) return; // file didn't exist (or not readable)
-	let config;
-	try {
-		config = yaml.parse(content) as unknown;
-	} catch (e) {
-		const err = isNativeError(e) ? e.message : String(e);
-		error(`Could not parse yaml file '${rc}': ${err}`);
-		return;
-	}
-
-	if (!config) return; // empty file
-	if (typeof config !== "object") {
-		warn(`${rc} contains only a scalar. Ignoring...`);
-		return;
-	}
-
-	return config;
-}
-
 async function installPackages(...packages: string[]) {
 	if (packages.length === 0) return; // If no packages are specified, do nothing.
 	const apt = await which("apt", { nothrow: true });
@@ -79,8 +37,7 @@ async function installPackages(...packages: string[]) {
 			`Could not find apt! ${thisfile} currently only works on debian-based systems!`
 		);
 	}
-	const { exitCode } = await $`apt install -- ${packages}`.nothrow();
-	if (exitCode !== 0) warn("command failed!");
+	await commandStatus($`apt install -- ${packages}`);
 }
 
 async function getOSID() {
@@ -104,7 +61,7 @@ async function getOSID() {
 	return id ?? "linux";
 }
 
-async function handlePackages(packages: RcYaml["packages"]) {
+async function handlePackages({ packages }: YamlConfig) {
 	const osid = await getOSID();
 	if (!packages) return true;
 	const packageList = [];
@@ -123,7 +80,8 @@ async function isGitRepo(path: string) {
 	const { exitCode } = await $`git -C ${path} rev-parse`.quiet().nothrow();
 	return exitCode === 0;
 }
-async function handleClone(home: string, clone: RcYaml["clone"]) {
+
+async function handleClone(home: string, { clone }: YamlConfig) {
 	if (!clone) return;
 	const entries = Object.entries(clone);
 	if (entries.length === 0) return; // empty object, return
@@ -149,31 +107,19 @@ async function handleClone(home: string, clone: RcYaml["clone"]) {
 		// Already exists *and* is a git repo
 		if (await isGitRepo(filepath)) continue;
 
-		const { exitCode } =
-			await $`${git} clone ${args} -- ${url} ${filepath}`.nothrow();
-		if (exitCode !== 0) warn(`command failed!`);
+		await commandStatus($`${git} clone ${args} -- ${url} ${filepath}`);
 		// Make sure that the repo has the right owner.
-		await $`chown -R ${euid}:${egid} -- ${filepath}`.nothrow();
+		await commandStatus($`chown -R ${euid}:${egid} -- ${filepath}`);
 	}
 }
 
-export async function run() {
-	const home = getHome();
-	const thisfile = fileURLToPath(import.meta.url);
-	const packageJson = await findFile("package.json", path.dirname(thisfile));
-	if (!packageJson) throw new Error("Could not find root directory");
-	const root = path.dirname(packageJson);
+export async function run({ root, home, config }: ActionOptions) {
 	const rcfiles = path.join(root, "files", "rc");
 	await updateCopy(home, root, rcfiles);
-
-	const rcyaml = path.join(root, "files", "rc.yaml");
-	const config = (await parseYaml(rcyaml)) as RcYaml; // just assert it. I don't feel like doing this right now.
-	if (!config) return;
-	const { packages, clone } = config;
 	// Install the listed packages!
-	const packagesRes = await handlePackages(packages);
+	const packagesRes = await handlePackages(config);
 	if (packagesRes === false) return false;
-	const cloneRes = await handleClone(home, clone);
+	const cloneRes = await handleClone(home, config);
 	if (cloneRes === false) return false;
 }
 export default run satisfies Action;
