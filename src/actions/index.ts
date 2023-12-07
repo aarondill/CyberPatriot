@@ -154,7 +154,11 @@ export async function runActions(opts: ActionOptions): Promise<boolean> {
 		const action = await importAction(filepath);
 		if (!action) continue;
 		if (action.disabled) continue;
-		const msg = `run action '${action.description ?? filepath}'`;
+		console.log(); // Place spacing
+		const msg = colors(
+			chalk.yellow,
+			`run action '${action.description ?? filepath}'`
+		);
 		if (!(await confirm(msg, true))) continue;
 
 		const suc = await action.default(opts);
