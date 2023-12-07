@@ -44,9 +44,7 @@ export async function run() {
 	const hashExpected = (await res.text()).split("  ")[0];
 
 	console.log(`Downloading appimage (${appimageUrl.href})...`);
-	const appimage = await downloadFile(appimageUrl, {
-		output: "/usr/bin/nvim",
-	});
+	const appimage = await downloadFile(appimageUrl, "/usr/bin/nvim");
 
 	const hashActual = await checksumFile("sha256", appimage);
 	if (hashActual !== hashExpected) {
