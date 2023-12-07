@@ -1,4 +1,5 @@
 import { question, chalk } from "zx";
+import type { Nullable } from "./types.js";
 export async function confirm(
 	what: string,
 	defaultResponse = false
@@ -42,4 +43,29 @@ export function abort(msg?: string | null, code?: number | null): number {
 	error(msg ? `Aborting: ${msg}` : "Aborting");
 	process.exitCode = code ?? 1;
 	return code ?? 1;
+}
+
+export function getURL(
+	prompt: Nullable<string>,
+	nullPermitted: false
+): Promise<URL>;
+export function getURL(
+	prompt?: Nullable<string>,
+	nullPermitted?: Nullable<true>
+): Promise<URL | null>;
+export async function getURL(
+	prompt?: Nullable<string>,
+	nullPermitted?: Nullable<boolean>
+) {
+	prompt ??= "Enter a URL:";
+	nullPermitted ??= true;
+
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
+		const url = await question(prompt);
+		if (!url && nullPermitted) return null;
+
+		if (URL.canParse(url)) return new URL(url);
+		console.warn("Invalid URL, please check your spelling and try again.");
+	}
 }
