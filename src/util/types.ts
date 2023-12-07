@@ -54,6 +54,8 @@ export type Nullable<T> = T | null | undefined;
 Makes all values in an object nullable, recusively.
 Arrays are considered a single value.
 */
-export type DeepNullable<T> = T extends object
-	? Nullable<{ [K in keyof T]?: DeepNullable<T[K]> }>
-	: Nullable<T>;
+export type DeepNullable<T> = T extends unknown[]
+	? Nullable<T>
+	: T extends object
+	  ? Nullable<{ [K in keyof T]?: DeepNullable<T[K]> }>
+	  : Nullable<T>;
