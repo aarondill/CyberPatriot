@@ -2,12 +2,8 @@ import type { Mode, PathLike } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
 import fs from "node:fs/promises";
 import { isNodeError } from "./types.js";
-import path, { dirname } from "node:path";
+import path from "node:path";
 import type { Parameters } from "tsafe";
-import https from "node:https";
-import http from "node:http";
-import { createWriteStream } from "node:fs";
-import { $, which } from "zx";
 
 export async function fileAccess(...args: Parameters<typeof fs.access>) {
 	try {
@@ -69,22 +65,23 @@ export async function* walk(
 	}
 }
 
-export async function downloadFile(url: URL, dest: string | null) {
-	const destPath = dest ?? path.basename(url.pathname);
-	const { href } = url;
-
-	await fs.mkdir(path.dirname(destPath), { recursive: true });
-	const curl = await which("curl", { nothrow: true });
-	if (curl) {
-		// This will throw an error if the command fails
-		await $`${curl} -SsfL -o ${destPath} -- ${href}`;
-		return destPath;
+export async function downloadFile(url: URL | string, dest: string | null) {
+	url = typeof url === "string" ? new URL(url) : url;
+	if (dest === null) {
+		// Default to the filename in the current directory
+		dest = path.basename(url.pathname);
+		if (dest === "") {
+			const msg = "Pathname must not be empty to get filename from URL.";
+			throw new TypeError(msg);
+		}
 	}
+	if (dest === "") throw new TypeError("dest must be a non-empty string");
 
-	const wget = await which("wget", { nothrow: true });
-	if (wget) {
-		// This will throw an error if the command fails
-		await $`${wget} -q -o ${destPath} -- ${href}`;
-		return destPath;
-	}
+	await fs.mkdir(path.dirname(dest), { recursive: true });
+	const res = await fetch(url);
+	if (!res.ok)
+		throw new Error(`Failed to download file. Status code: ${res.status}`);
+	if (!res.body) throw new Error("Failed to download file. No body included.");
+	await fs.writeFile(dest, res.body);
+	return dest;
 }
