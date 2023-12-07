@@ -12,17 +12,23 @@ export type CloneOptions = {
 	/** Options for the git clone command. */
 	args?: string[];
 };
-export type YamlConfig = DeepNullable<{
-	packages: {
-		/** Special case. All platforms. */
-		"*": string[];
-		/** id parsed from /etc/os-release */
-		[id: string]: string[];
-	};
-	clone: {
-		[path: string]: CloneOptions;
-	};
-}>;
+/**
+The type of the config file
+Note: NonNullable to to remove the top level of nullability.
+*/
+export type YamlConfig = NonNullable<
+	DeepNullable<{
+		packages: {
+			/** Special case. All platforms. */
+			"*": string[];
+			/** id parsed from /etc/os-release */
+			[id: string]: string[];
+		};
+		clone: {
+			[path: string]: CloneOptions;
+		};
+	}>
+>;
 
 async function parse(file: string): Promise<object> {
 	const content = await fs.readFile(file, { encoding: "utf8" }).catch(NULLCB);
