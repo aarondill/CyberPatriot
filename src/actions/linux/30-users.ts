@@ -1,4 +1,3 @@
-import { warn } from "console";
 import fs from "node:fs/promises";
 import { $, question } from "zx";
 import {
@@ -7,6 +6,7 @@ import {
 	error,
 	getURL,
 	openFile,
+	warn,
 } from "../../util/index.js";
 import type { AdminUser } from "../../util/users.js";
 import { getUsersFromURL } from "../../util/users.js";
