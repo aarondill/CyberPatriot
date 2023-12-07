@@ -9,7 +9,7 @@ export type Users = {
 };
 
 function parseUsers(lines: readonly string[]): Users {
-	const startAdmin = lines.indexOf("Authorized Administrators:"); // should be 0
+	const startAdmin = lines.findIndex(s => s.includes("Authorized Administrators:")); // should be 0
 	assert(startAdmin !== -1, "Could not find start of admins");
 	const startUsers = lines.findIndex(s => s.includes("Authorized Users:"));
 	assert(startUsers !== -1, "Could not find start of users");
