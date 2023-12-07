@@ -59,7 +59,10 @@ async function copyRoot(rootdir: string) {
 		const rel = path.relative(rootdir, file);
 		const dest = path.join("/", rel);
 		const destDir = path.dirname(dest);
-		if ((await fileExists(dest)) && !(await cmp(file, dest))) {
+		if (
+			(await fileExists(dest)) &&
+			!(await cmp(file, dest, { metadata: ["mode"] }))
+		) {
 			const conf = await confirm(`overwrite ${dest}?`, true);
 			if (!conf) continue;
 		}

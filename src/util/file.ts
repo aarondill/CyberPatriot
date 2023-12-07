@@ -31,6 +31,10 @@ type FileTypeMethods<T> = {
 			: never
 		: never;
 }[keyof T];
+/** A set of methods needed to be implemented while checking Stats file type */
+type FileMetaProps<T> = {
+	[K in keyof T]: T[K] extends (...args: unknown[]) => unknown ? never : K;
+}[keyof T];
 
 /** null if the file can't be accessed */
 export async function fileType(file: PathLike): Promise<FileType | null>;
@@ -94,6 +98,10 @@ async function compareFiles(h1: FileHandle, h2: FileHandle, size: number) {
 	}
 	return true;
 }
+type CmpOptions = {
+	metadata?: boolean | FileMetaProps<Stats>[] | FileMetaProps<Stats>;
+	contents?: boolean;
+};
 /**
  * Check if two files are the same
  * if opts.metadata is true, also check the file metadata -- mode, uid, gid
@@ -102,7 +110,7 @@ async function compareFiles(h1: FileHandle, h2: FileHandle, size: number) {
 export async function cmp(
 	a: PathLike,
 	b: PathLike,
-	{ metadata = true, contents = true } = {}
+	{ metadata = true, contents = true }: CmpOptions = {}
 ): Promise<boolean> {
 	const statA = await normalizeStat(a),
 		statB = await normalizeStat(b);
@@ -112,12 +120,16 @@ export async function cmp(
 
 	// Only check mode, uid, and gid if metadata is true
 	if (metadata) {
-		const compare = ["mode", "uid", "gid"] as const;
+		const compare =
+			metadata === true
+				? (["mode", "uid", "gid"] as const)
+				: typeof metadata === "string"
+				  ? [metadata]
+				  : metadata;
 		for (const key of compare) {
 			if (statA[key] !== statB[key]) return false;
 		}
 	}
-
 	// Only check the actual contents if contents is true
 	if (contents) {
 		// Check the size first. if they are different, the content is different.
