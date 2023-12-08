@@ -22,10 +22,12 @@ for f in "$rcdir/"**; do
   fi
   if cmp -s "$f" "$homepath"; then continue; fi # Same. Skip.
   if has_cmd diff less; then
+    diff_opts=()
+    if diff --help | grep -q -- '--color'; then diff_opts+=(--color=always); fi
     # Show user interactive diff
     {
       printf "%s -> %s\n" "$f" "$homepath"
-      diff --color=always -- "$f" "$homepath"
+      diff "${diff_opts[@]}" -- "$f" "$homepath" || [ "$?" -eq 1 ] # diff exits with 1
     } | less -R
   fi
   # Note: cp -i so the user gets prompted on each file
