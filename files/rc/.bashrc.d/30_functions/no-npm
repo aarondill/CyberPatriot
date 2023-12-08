@@ -18,14 +18,15 @@ function npm() {
     OUTPUT=/proc/self/fd/1
   fi
 
-  if [[ -n "$OUTPUT" ]]; then
-    printf "%b" "$message" >"$OUTPUT"
-    # Defaults to no
-    read -rep "Are you sure you want to use NPM? (y/N) " confirmation
-    if [[ -n "$confirmation" && "${confirmation,,}" =~ ^\s*y(es)?\s*$ ]]; then
-      command npm "$@"
-    fi
-  else
+  if ! command -v pnpm || [ -z "$OUTPUT" ]; then
+    command npm "$@"
+    return
+  fi
+
+  printf "%b" "$message" >"$OUTPUT"
+  # Defaults to no
+  read -rep "Are you sure you want to use NPM? (y/N) " confirmation
+  if [[ -n "$confirmation" && "${confirmation,,}" =~ ^\s*y(es)?\s*$ ]]; then
     command npm "$@"
   fi
 }

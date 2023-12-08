@@ -192,4 +192,19 @@ if will_startx; then
 fi
 unset -f will_startx
 
+# Bash 5.1 added support for PROMPT_COMMAND as an array.
+# If running in a lesser version, concat PROMPT_COMMAND into a single string
+# My config assumes that PROMPT_COMMAND can be an array.
+if [ "${BASH_VERSINFO[0]}" -lt 5 ] || { [ "${BASH_VERSINFO[0]}" -eq 5 ] && [ "${BASH_VERSINFO[1]}" -lt 1 ]; }; then
+  _join_prompt_command() {
+    unset -f _join_prompt_command # self destructing function
+    local tmp='' elem
+    for elem in "${PROMPT_COMMAND[@]}"; do
+      tmp+="${elem%;};" # Ensure elem doesn't end in a ';', then add a ';' between elements
+    done
+    unset -v PROMPT_COMMAND          # remove PROMPT_COMMAND
+    declare -g PROMPT_COMMAND="$tmp" # redefine PROMPT_COMMAND as a non-array
+  } && _join_prompt_command
+fi
+export -n PROMPT_COMMAND # This should *not* be exported. Stop subshells from double appending.
 # ------------------------------END OF FILE------------------------------

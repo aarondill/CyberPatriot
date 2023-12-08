@@ -74,3 +74,4 @@ code/repos/.awesome-scripts
 .local/share/applications/restart.desktop
 .local/share/applications/shutdown.desktop
 .config/clangd/config.yaml
+code/java/UIL/template

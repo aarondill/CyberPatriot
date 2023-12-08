@@ -8,7 +8,7 @@
 # May also be a good place for init scripts
 # If required by other files
 #
-declare -ax PROMPT_COMMAND
+declare -a PROMPT_COMMAND
 PROMPT_COMMAND=("${PROMPT_COMMAND[@]}")
 
 rm_rf=( # These will be removed forcefully.
