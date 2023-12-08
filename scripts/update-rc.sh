@@ -23,7 +23,10 @@ for f in "$rcdir/"**; do
   if cmp -s "$f" "$homepath"; then continue; fi # Same. Skip.
   if has_cmd diff less; then
     # Show user interactive diff
-    diff "$f" "$homepath" | less
+    {
+      printf "%s -> %s\n" "$f" "$homepath"
+      diff --color=always -- "$f" "$homepath"
+    } | less -R
   fi
   # Note: cp -i so the user gets prompted on each file
   # cp -Pp -R is posix for cp --archive
