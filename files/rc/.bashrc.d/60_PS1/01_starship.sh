@@ -49,11 +49,10 @@ eval "$(starship init bash)" # Init starship
 PROMPT_COMMAND=("$PROMPT_COMMAND" "${OLD_PROMPT_COMMAND[@]}") # prepend, since it's trying to prepend anyways
 unset OLD_PROMPT_COMMAND
 
+# Starship assumes these exist. This fails on `set -u`
+if ! [ -v "BP_PIPESTATUS[@]" ]; then declare -a BP_PIPESTATUS=(); fi
+if ! [ -v "_PRESERVED_PROMPT_COMMAND" ]; then declare _PRESERVED_PROMPT_COMMAND=; fi
+
 # Force first load to ensure that PS1 gets set
-true
 # or true, I don't care if this fails, starship should handle itself.
 starship_precmd || true
-
-if ! [ -v "BP_PIPESTATUS[@]" ]; then
-  declare -a BP_PIPESTATUS=()
-fi

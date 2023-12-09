@@ -8,17 +8,12 @@
 # MUST be the last program to modify PROMPT_COMMAND to
 # function properly
 #
-var=ab
-for item in "${array[@]}"; do
-	[[ $var == "$item" ]] && echo "$var present in the array"
-done
-
 pre='__EXIT=$?'
 # shellcheck disable=SC2016 # IK expressions do not expand. that is the point.
 post='(exit $__EXIT)'
 # Don't do if contains already
 if ! [[ "${PROMPT_COMMAND[0]}" == "$pre" ]] || ! [[ "${PROMPT_COMMAND[-1]}" == "$post" ]]; then
-	# Capture exit code before prompt and reinstantiate after
-	PROMPT_COMMAND=("$pre" "${PROMPT_COMMAND[@]}" "$post")
+  # Capture exit code before prompt and reinstantiate after
+  PROMPT_COMMAND=("$pre" "${PROMPT_COMMAND[@]}" "$post")
 fi
 unset pre post
