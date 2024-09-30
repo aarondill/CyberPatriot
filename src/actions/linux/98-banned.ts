@@ -50,7 +50,10 @@ export async function run({ home }: ActionOptions) {
 	const successes = results
 		.filter(result => result.status === "fulfilled")
 		.map(result => result.value);
-	const bannedFiles = successes.flatMap(result => result.stdout.split("\n"));
+	const bannedFiles = successes
+		.flatMap(result => result.stdout.split("\n"))
+		.filter(Boolean)
+		.filter(file => !file.includes("/snap/")); // I *HATE* Snap.
 
 	await fs.writeFile(outfile, bannedFiles.join("\n")); // write to log file
 	console.log(`Found ${bannedFiles.length} banned files: `);
