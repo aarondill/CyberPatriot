@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# ~/.bashrc.d/48_systemctl
+#
+# Displays number of failed systemctl units
+# This should be after neofetch
+#
+
+systemctl is-failed &>/dev/null || systemctl --user is-failed &>/dev/null || return 0
+printf '%s\n' "Failed systemctl units: "
+_args=(list-units --state=failed --no-pager --legend=no)
+SYSTEMD_COLORS=true systemctl "${_args[@]}"
+SYSTEMD_COLORS=true systemctl --user "${_args[@]}"
+unset _args

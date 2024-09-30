@@ -5,31 +5,36 @@
 # Sets up aliases for user usage
 #
 
-# Is a command available?
-function has() { [ -x "$(command -v -- "$1")" ]; }
-
 # I'm stupid and can't remember what to type
 alias quit='exit'
 alias :q='exit'
 alias d='cd'
+if ! has totem && has mpv; then
+  alias totem='echo "maybe you meant mpv?" >&2 && mpv'
+fi
+if has nnn && ! has fff; then
+  alias fff='echo "maybe you meant nnn?" >&2 && nnn'
+fi
 # Alias sudo to call sudo with *my* $HOME/ENV/PATH
 # alias sudo="sudo -E env PATH=\"\$PATH\" "
 alias sudo='sudo -E ' # dont use env so permitted commands still work
-# Unrestrict fd by default
-if has fdfind; then
-  alias fd="fdfind -uu"
-else
-  alias fd="fd -uu"
-fi
+alias fd="fd -uu"     # Unrestrict fd by default
+if has fdfind; then alias fd="fdfind -uu"; fi
 alias rg="rg -uu -i"
-alias rd='ripdrag -xr'
+alias rd='ripdrag -r'
 alias rdt='ripdrag -ktr'
-# Show progress pls
-alias dd="dd status=progress"
-# Ask before overwriting
-alias mv="mv -i"
+alias info='info --vi-keys'
+alias dd="dd status=progress" # Show progress pls
+alias mv="mv -i"              # Ask before overwriting
+unmv() { mv -i "$2" "$1"; }   # Note: only works for simple moves.
 alias cp="cp -ai"
 alias rm="rm --preserve-root"
+
+mkdirc() { mkdir -p -- "$1" && builtin cd -- "$1" || return; }
+alias cdm=mkdirc
+# alias cdtmp='cdm "$(mktemp -d)"'
+alias cdtmp='cdm ~/tmp'
+
 # Save history on exit
 alias poweroff="history -a; /sbin/poweroff"
 alias reboot="history -a; /sbin/reboot"
@@ -38,10 +43,11 @@ alias shutdown="history -a; /sbin/shutdown"
 # Toggle capslock from terminal (bc capslock key is remapped)
 alias capslock='xdotool key Caps_Lock'
 alias CAPSLOCK='xdotool key Caps_Lock'
-
-if has new; then
-  alias new-java='new -l java'
+if has qmv; then
+  alias qmv='qmv -f do'
 fi
+
+if has new; then alias new-java='new -l java'; fi
 
 # alias backup="~/.backup/dobackup"
 # alias lastbackup="/usr/bin/cat ~/.backup/backup-time"
@@ -71,47 +77,25 @@ if [ -n "${EDITOR:-}" ]; then
   export VISUAL="$EDITOR"
 fi
 
-alias fslite='browser fslite.vercel.app'
-# Don't show loopback, and show more useful columns
-alias lsblk="lsblk -e 7 -o NAME,MAJ:MIN,SIZE,FSTYPE,LABEL,MOUNTPOINT"
-exa= && if has eza; then exa=eza; elif has exa; then exa=exa; fi
-if [ -n "$exa" ]; then
-  ls="$exa --color=auto -h --group"
-  if "$exa" --version | grep -qF '[+git]'; then
-    ls+=" --git" # add --git argument if supported
-  else
-    export "${exa^^}_OVERRIDE_GIT=1" # {EXA,EZA}_OVERRIDE_GIT
+{
+  # Don't show loopback, and show more useful columns
+  _lsblk='lsblk -o NAME,MAJ:MIN,SIZE,FSTYPE,LABEL,MOUNTPOINT'
+  if has snap; then _lsblk+=' -e 7'; fi
+  # shellcheck disable=SC2139 # I exect it to expand now
+  alias lsblk="$_lsblk"
+  unset _lsblk
+}
+
+# Don't show /run/credentials/* in df or duf
+if [ -d /run/credentials/ ]; then
+  if has duf; then
+    _hide=('/run/credentials/*')
+    # shellcheck disable=SC2139
+    alias duf="duf -hide-mp ${_hide@Q}"
+    unset _hide
   fi
-  case "${TERM,,}" in
-  linux | dumb) ;; # don't show icons in linux terminal.
-  *) ls+=" --icons" ;;
-  esac
-
-  ll="$ls -l"
-  if [ "$exa" = 'eza' ]; then                  # These only work on eza. The rest should be supported for both versions!
-    eza_only="--smart-group --color-scale age" # only show group if group != owner
-    ls+=" $eza_only" ll+=" $eza_only"
-
-    ll+=" -M" # Show mounts (underline) :) Only works with long view and no grid!
-    # ls+=" --no-quotes"                        # no quotes (now) break alignment. See: https://github.com/eza-community/eza/pull/551
-    unset eza_only
-  fi
-
-  # shellcheck disable=SC2139 # I expect it to expand on definition
-  alias ls="$ls --grid"
-  alias la="ls -a"
-  # shellcheck disable=SC2139 # I expect it to expand on definition
-  alias ll="$ll"
-  alias lla="ll -a"
-  alias llaa="ll -aa"
-else
-  alias ls='ls --color=auto -h'
-  alias la="ls -A"
-  alias ll="ls -l"
-  alias lla="ls -lA"
-  alias llaa="ls -la"
+  if has df; then alias df="df --exclude-type=tmpfs"; fi
 fi
-unset ls ll exa
 
 alias cl='clear'
 alias tree='tree -a' # show hidden
@@ -119,43 +103,8 @@ if has tty-clock; then alias clock='tty-clock  -sScbtrn'; fi
 
 if has n; then alias n='sudo "$(which n)"'; fi
 
-# Show battery information
-alias battery='upower -i $(upower -e | grep BAT)'
-
-if has zip; then
-  # alias for zipping files that should be hidden
-  alias secret-zip='zip -9ruvoe'
-fi
-
-# Replace `cat` with `bat`, if installed
-
-# The path to the bat executable
-bat=
-if has bat; then bat=$(command -v bat); elif has batcat; then bat=$(command -v batcat); fi
-
-if has bat || has batcat; then
-  if ! has bat; then
-    alias bat="batcat"
-  elif ! has batcat; then
-    alias batcat="bat"
-  fi
-  alias cat="bat"
-
-  export MANPAGER="sh -c 'col -bx | \"$bat\" -l man -p'"
-  export MANROFFOPT="-c" # disable color output in man pages
-  # Tests bat version and exits 0 if version is high enough
-  # subshell to avoid leaving behind variables
-  (
-    # 0.21.0 is the latest version where PAGER=bat will cause
-    # recursive forks, thus require greater than this before setting PAGER
-    ExpecV="0.21.0"
-    versions="$(printf '%s\n' "$("$bat" --version | cut -d' ' -f 2)" "$ExpecV")"
-    # shellcheck disable=SC2319 # $? *should* refer to the condition, not the sort command
-    test "$versions" != "$(sort -V <<<"$versions")" || exit "$?"
-  ) && export PAGER="$bat"
-
-fi
-unset bat
+alias battery='upower -i $(upower -e | grep BAT)'   # Show battery information
+if has zip; then alias secret-zip='zip -9ruvoe'; fi # alias for zipping files that should be hidden
 
 if has chezmoi; then
   alias config='chezmoi'
@@ -180,26 +129,21 @@ if has lazygit; then alias lg='lazygit'; fi
 
 # Shorter git
 if has git; then
+  alias gitroot='cd "$(git rev-parse --show-toplevel)"'
   alias g='git'
   # Reuse git completion if present (overwritten already), else default to directories
-  complete=$(complete -p git 2>/dev/null || printf '%s ' complete -o bashdefault -o default -o nospace -F __git_wrap__git_main git)
-  # remove ' git' and replace with ' g'. Lack of quotes is intentional!
-  if [ -n "$complete" ]; then
-    eval "${complete% git} g"
-  fi
+  _complete=$(complete -p git 2>/dev/null || printf '%s ' complete -o bashdefault -o default -o nospace -F __git_wrap__git_main git)
+  # remove ' git' and replace with ' g'
+  [ -z "$_complete" ] || eval "${_complete% git} g"
+  unset _complete
   # if not defined, just wait till git is used
   if has __load_completion; then
     __load_completion git
   fi
 fi
 
-IBus="org.freedesktop.IBus.session.GNOME.service"
-# If it's enabled in the first place
-if systemctl list-unit-files --quiet --all --type=service --user --state=enabled "$IBus" &>/dev/null; then
-  # shellcheck disable=SC2139 # I exect it to expand now
-  alias restart-ibus="systemctl --user restart '$IBus'"
-fi
-unset IBus
+alias gsudo='pkexec env GTK_THEME="$GTK_THEME" DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" '
+alias restart-ibus='ibus-daemon --xim -d -r'
 
 # Don't you DARE open a window
 alias emacs='emacs -nw'
@@ -208,7 +152,7 @@ alias ssh='TERM=xterm-256color ssh'
 # Save history to ~/.cache/awesome
 alias awesome-client='RLWRAP_HOME="$HOME/.cache/awesome" awesome-client'
 
-if has 'ffplay'; then
+if has ffplay; then
   alias aplay='ffplay -nodisp -hide_banner -autoexit'
 fi
 
@@ -230,6 +174,3 @@ else
   }
 fi
 # https://nvchad.com/
-
-# Don't leak this to the shell
-unset -f has

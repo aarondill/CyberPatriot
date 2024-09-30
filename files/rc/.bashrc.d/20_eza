@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/20_eza
+#
+# Sets up eza/ls
+#
+
+exa=
+if has eza; then
+  exa=eza
+elif has exa; then
+  exa=exa
+fi
+
+# Ensure that none of these aliases are pre-defined
+unalias ls la ll lla llaa &>/dev/null || true
+
+if [ -z "$exa" ]; then
+  unset exa
+  alias ls='ls --color=auto -h'
+  alias la="ls -A"
+  alias ll="ls -l"
+  alias lla="ls -lA"
+  alias llaa="ls -la"
+  return 0 # Don't error out if eza is not installed
+fi
+
+ls="$exa --color=auto -h --group"
+if "$exa" --version | grep -qF '[+git]'; then
+  ls+=" --git" # add --git argument if supported
+else
+  export "${exa^^}_OVERRIDE_GIT=1" # {EXA,EZA}_OVERRIDE_GIT
+fi
+case "${TERM,,}" in
+linux | dumb) ;; # don't show icons in linux terminal.
+*) ls+=" --icons" ;;
+esac
+
+ll="$ls -l"
+if [ "$exa" = 'eza' ]; then                  # These only work on eza. The rest should be supported for both versions!
+  eza_only="--smart-group --color-scale age" # only show group if group != owner
+  ls+=" $eza_only" ll+=" $eza_only"
+
+  ll+=" -M" # Show mounts (underline) :) Only works with long view and no grid!
+  # ls+=" --no-quotes"                        # no quotes (now) break alignment. See: https://github.com/eza-community/eza/pull/551
+  unset eza_only
+fi
+
+# shellcheck disable=SC2139 # I expect it to expand on definition
+alias ls="$ls --grid"
+alias la="ls -a"
+# shellcheck disable=SC2139 # I expect it to expand on definition
+alias ll="$ll"
+alias lla="ll -a"
+alias llaa="ll -aa"
+
+unset ls ll exa

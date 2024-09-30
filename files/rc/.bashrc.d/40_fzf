@@ -114,3 +114,4 @@ path_completeds=(basename cat chattr chmod chown code diff diff3 dirname
 for cmd in "${path_completeds[@]}"; do
   _fzf_setup_completion path "$cmd"
 done
+unset cmd dir_completeds path_completeds

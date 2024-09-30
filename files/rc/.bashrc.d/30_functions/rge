@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/30_functions/rge
+#
+# Sets up rge function for editing all results of rg
+
+function rge() {
+  local rg=(rg -l)
+  command -v rg &>/dev/null || rg=(grep -r -l) # Closest to rg available
+  local files=()
+  readarray -t files < <("${rg[@]}" "$@")
+  ${VISUAL:-${EDITOR:-editor}} "${files[@]}"
+}

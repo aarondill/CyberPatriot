@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/20_bat
+#
+#
+# Replace `cat` with `bat`, if installed
+
+# The path to the bat executable
+bat=
+if has bat; then
+  bat=bat
+elif has batcat; then
+  bat=batcat
+fi
+
+if [ -z "$bat" ]; then
+  unset bat
+  return
+fi
+
+case "$bat" in
+batcat) alias bat="batcat" ;;
+bat) alias batcat="bat" ;;
+esac
+alias cat="bat"
+
+export MANPAGER="sh -c 'col -bx | \"$bat\" -l man -p'"
+export MANROFFOPT="-c" # disable color output in man pages
+# Tests bat version and exits 0 if version is high enough
+# subshell to avoid leaving behind variables
+(
+  # 0.21.0 is the latest version where PAGER=bat will cause
+  # recursive forks, thus require greater than this before setting PAGER
+  ExpecV="0.21.0"
+  versions="$(printf '%s\n' "$("$bat" --version | cut -d' ' -f 2)" "$ExpecV")"
+  # shellcheck disable=SC2319 # $? *should* refer to the condition, not the sort command
+  test "$versions" != "$(sort -V <<<"$versions")" || exit "$?"
+) && export PAGER="$bat"
+
+unset bat

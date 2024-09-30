@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/22_cat
+#
+#
+
+_remove_lla_alias=''
+alias lla &>/dev/null || _remove_lla_alias=1
+[ -z "$_remove_lla_alias" ] || alias lla='ls -lA'
+alias cat &>/dev/null || alias cat='command cat' # ensure no recursive call of cat function
+
+# This needs the function keyword to ensure the alias isn't expanded in the
+# function header
+# Calls `ls` if called on a directory, else calls `cat` to show the contents of the file
+function cat() {
+  if [ "$#" -ne 1 ]; then
+    cat "$@" # if 0 or >1 arguments, act same as `cat`
+    return
+  fi
+  local f exit=0
+  for f in "$@"; do
+    # expands the aliases previously defined!
+    if [ -d "$f" ]; then
+      lla "$f" || exit="$?"
+    else
+      cat "$f" || exit="$?"
+    fi
+  done
+  return "$exit"
+}
+# This must be after the function definition to ensure that the aliases get
+# expanded inside the function body!
+unalias cat &>/dev/null
+[ -z "$_remove_lla_alias" ] || unalias lla
+unset -v _remove_lla_alias

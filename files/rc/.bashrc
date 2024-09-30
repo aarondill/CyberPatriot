@@ -63,15 +63,13 @@ esac
 
 # enable color support of ls and also add handy aliases
 if command -v dircolors &>/dev/null; then
-  dircolors_file="${XDG_CONFIG_HOME:-$HOME/.config}"/dircolors
-  if [ -r "$dircolors_file" ]; then
-    eval "$(dircolors -b "$dircolors_file")"
-  elif [ -r ~/.dircolors ]; then
-    eval "$(dircolors -b ~/.dircolors)"
-  else
-    eval "$(dircolors -b)"
-  fi
-  unset dircolors_file
+  dircolors_file="${XDG_CONFIG_HOME:-~/.config}"/dircolors
+  [ -r "$dircolors_file" ] || dircolors_file=~/.dircolors
+  _args=("$dircolors_file")
+  [ -r "$dircolors_file" ] || _args=()
+  eval "$(dircolors -b "${_args[@]}")"
+  unset dircolors_file _args
+
   alias ls='ls --color=auto'
   alias dir='dir --color=auto'
   alias vdir='vdir --color=auto'
@@ -126,8 +124,9 @@ fi
 # fi
 
 # ---------------------------BEGIN CUSTOM CODE---------------------------
+# This function is leaked to the shell, this is fine.
+has() { command -v "$1" >/dev/null 2>/dev/null; }
 
-will_startx() { command -v startx &>/dev/null && [ -z "$DISPLAY" ] && [ "$TERM" = "linux" ] && [ "$(tty)" = /dev/tty1 ] && [ -z "$SKIP_STARTX_LOGIN" ]; }
 # All code above this point is part of the distrobution.
 # Any code below is part of my personal installation
 #
@@ -138,28 +137,22 @@ if command -v starship &>/dev/null; then
   export DISABLE_CUSTOM_PS1=${DISABLE_CUSTOM_PS1-1}
 fi
 
-# HACK: Stop neofetch from starting on tty when starting WM. This decreases initial login time.
-# This doesn't leak bc it's not exported and if will_startx then this bash instance is replaced with startx
-if will_startx; then export NONEOFETCH=1; fi
-
 # Initialize `~/.bashrc.d`
-if [ -d "$HOME/.bashrc.d/" ]; then
-  # Find all files not starting with _, and sort, ensuring base lang
-  readarray -d '' files < <(find "$HOME/.bashrc.d/" -type f -not -name "_*" -print0 | LC_ALL=C sort -z)
-  # disable keyboard echo until bashrc is done
-  stty -echo 2>/dev/null
-  for file in "${files[@]}" ~/tmp/bashrc; do # read temporary rc to allow user config
-    [ -r "$file" ] || continue
-    # For each file, if bench var is assigned,
-    # then call time and output benchmark
-    # shellcheck disable=SC1090 # Don't even try to follow this loop
-    if [ -n "$__bashrc_bench" ]; then
-      TIMEFORMAT="$file: %R"
-      time . "$file"
-      unset TIMEFORMAT
-    else
-      . "$file"
-    fi
+if [ -d ~/.bashrc.d ]; then
+  stty -echo 2>/dev/null # disable keyboard echo until bashrc is done
+  shopt -s globstar
+  # shellcheck disable=SC1090 # $file is dynamic
+  for file in ~/.bashrc.d/** ~/tmp/bashrc ~/.bashrc.tmp; do # read temporary rc to allow user config
+    { [ -f "$file" ] && [ -r "$file" ]; } || continue
+    case "${file##*/}" in _*) continue ;; esac # Skip files that start with _
+    [ -n "$__bashrc_bench" ] || {
+      . "$file" || true
+      continue
+    }
+    # For each file, if bench var is assigned, then call time and output benchmark
+    TIMEFORMAT="$file: %R" # We can't do TIMEFORMAT='...' time bc that would call /bin/time
+    time . "$file" || true
+    unset TIMEFORMAT
   done
   # Enable keyboard echo for interactive use
   stty echo 2>/dev/null
@@ -170,34 +163,12 @@ fi
 # shellcheck source=/home/aaron/.config/tabtab/bash/__tabtab.bash
 if [ -f ~/.config/tabtab/bash/__tabtab.bash ]; then . ~/.config/tabtab/bash/__tabtab.bash; fi
 
-# Startx on tty1 -- tty should not return tty* in an emulator or ssh
-if will_startx; then
-  # The command to run. Leave empty to use the default. This should be a absolute path!
-  startx_command=()
-  # startx_command+=(~/code/repos/awesome/_scripts/run)
-  # LOG_FILE="$HOME/.cache/visual/$(date +"%D-%T.%3N").log"
-  LOG_FILE="$HOME/.cache/visual/visual.log"
-  mkdir -p -- "$(dirname "$LOG_FILE")"
-  # Keep LOG_FILE, LOG_FILE.old, and LOG_FILE.old.1
-  [ -f "$LOG_FILE.old.1" ] && \rm -f -- "$LOG_FILE.old.1"
-  [ -f "$LOG_FILE.old" ] && \mv -f -- "$LOG_FILE.old" "$LOG_FILE.old.1"
-  [ -f "$LOG_FILE" ] && \mv -f -- "$LOG_FILE" "$LOG_FILE.old"
-
-  if command -v visual &>/dev/null; then
-    exec visual "${startx_command[@]}" >|"$LOG_FILE" 2>&1 || true
-  else
-    exec startx "${startx_command[@]}" >|"$LOG_FILE" 2>&1 || true
-  fi
-  unset LOG_FILE startx_command
-fi
-unset -f will_startx
-
 # Bash 5.1 added support for PROMPT_COMMAND as an array.
 # If running in a lesser version, concat PROMPT_COMMAND into a single string
 # My config assumes that PROMPT_COMMAND can be an array.
 if [ "${BASH_VERSINFO[0]}" -lt 5 ] || { [ "${BASH_VERSINFO[0]}" -eq 5 ] && [ "${BASH_VERSINFO[1]}" -lt 1 ]; }; then
   _join_prompt_command() {
-    unset -f _join_prompt_command # self destructing function
+    unset -f "${FUNCNAME[0]}" # self destructing function
     local tmp='' elem
     for elem in "${PROMPT_COMMAND[@]}"; do
       tmp+="${elem%;};" # Ensure elem doesn't end in a ';', then add a ';' between elements

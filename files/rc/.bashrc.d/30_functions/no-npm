@@ -7,26 +7,22 @@
 # calls npm
 #
 function npm() {
-  local RED='\033[0;31m'
-  local NONE='\033[0m' # No Color
-  local message="no-npm: ${RED}Perhaps you meant pnpm?${NONE}\n"
-  local OUTPUT=""
+  local RED='\033[0;31m' NONE='\033[0m' # No Color
+  local output=""
   # Print to stderr if possible, else stdout if possible
-  if [[ -t 2 ]]; then
-    OUTPUT=/proc/self/fd/2
-  elif [[ -t 1 ]]; then
-    OUTPUT=/proc/self/fd/1
+  if [ -t 2 ]; then
+    output=/proc/self/fd/2
+  elif [ -t 1 ]; then
+    output=/proc/self/fd/1
   fi
 
-  if ! command -v pnpm || [ -z "$OUTPUT" ]; then
+  if ! command -v pnpm >&/dev/null || [ -z "$output" ]; then
     command npm "$@"
     return
   fi
 
-  printf "%b" "$message" >"$OUTPUT"
-  # Defaults to no
-  read -rep "Are you sure you want to use NPM? (y/N) " confirmation
-  if [[ -n "$confirmation" && "${confirmation,,}" =~ ^\s*y(es)?\s*$ ]]; then
-    command npm "$@"
-  fi
+  printf "%b\n" "no-npm: ${RED}Perhaps you meant pnpm?${NONE}" >"$output"
+  read -rep "Are you sure you want to use NPM? (Y/n) " confirmation # Defaults to yes
+  [ -z "$confirmation" ] || [[ "${confirmation,,}" =~ ^\s*y(es)?\s*$ ]] || return 1
+  command npm "$@"
 }

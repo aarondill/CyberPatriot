@@ -73,7 +73,7 @@ format = "[$symbol$environment]($style) "
 [container]
 symbol = "cont "
 format = '[$symbol($name )]($style)'
-disabled = true # disable because it shows in chromeos dev mode
+disabled = true                      # disable because it shows in chromeos dev mode
 
 [crystal]
 format = "[$symbol]($style)"
@@ -369,7 +369,7 @@ format = '[$symbol($signal_name )$status (\($common_meaning\) )]($style)'
 map_symbol = false
 # Pipe errors!
 pipestatus = true
-pipestatus_format = '\[$pipestatus\] => [$symbol$signal_name$status ]($style)'
+pipestatus_format = '\[$pipestatus\] => [$symbol($signal_name )$status ]($style)'
 pipestatus_segment_format = "[$status]($style)"
 
 [sudo]

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/30_functions/dlgh
+#
+# Sets up dlgh function for downloading github files with the regular url
+
+ghraw() {
+  local url="$1"
+  url=${url/github.com/raw.githubusercontent.com}
+  url=${url/\/blob\//\/} # replace '/blob/' with '/'
+  printf '%s\n' "$url"
+}
+
+dlgh() {
+  local url="$1" rawurl
+  rawurl=$(ghraw "$1")
+  local cargs=('-fL')
+  ! [ -t 1 ] || cargs+=(-O) # if stdout is a terminal, save to cwd
+  curl "${cargs[@]}" -- "$rawurl"
+}

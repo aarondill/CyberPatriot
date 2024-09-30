@@ -11,27 +11,24 @@
 
 function bash() {
   # trap "echo $? $! && [[ $SHLVL -gt 1 ]] && exit $?" SIGCHLD
-  /usr/bin/env bash "$@"
-  local returncode=$?
-  if [[ $returncode -eq 196 && $SHLVL -gt 1 ]]; then #if not oldest parent
-    exit $returncode 2>/dev/null                     #redir "exit" msg to null
-  elif [[ $returncode -eq 196 ]]; then               #if oldest parent
-    echo "Successfully closed all subshells"
-  else
-    echo "Exit $returncode"
+  command bash "$@"
+  local returncode="$?"
+  if [ "$returncode" -eq 196 ]; then
+    [ "$SHLVL" -le 1 ] || builtin exit "$returncode"
+    # oldest parent
+    printf '%s\n' "Successfully closed all subshells" >&2
   fi
-  echo "Shell level $SHLVL"
-  return $returncode
+  printf '%s\n' "Shell level $SHLVL" >&2
+  return "$returncode"
 }
 
 function exit() { exitall "$@"; }
 function exitall() {
-  exit_code=$?
-  [[ ! $(caller 0) ]] && set -- all # if exitall called directly, set $1 to all
-  if [[ ${1,,} == "all" ]]; then    #if first argument is "all"
-    builtin exit 196 2>/dev/null    # code to close recursively
-  else
-    (builtin exit "$exit_code")   # preserve exit code if none provided
-    builtin exit "$@" 2>/dev/null # passthrough argument to exit
+  local exit_code=$?
+  # if exitall called directly, or passed 'all'
+  if ! caller 0 &>/dev/null || [ "${1,,}" == "all" ]; then
+    builtin exit 196 # code to close recursively
   fi
+  (builtin exit "$exit_code")   # preserve exit code if none provided
+  builtin exit "$@" 2>/dev/null # passthrough argument to exit
 }

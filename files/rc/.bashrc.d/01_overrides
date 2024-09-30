@@ -34,17 +34,31 @@ rmdir=( # These will only be removed if empty
   ~/.vmware/
   ~/tmp/
   ~/.cups
+  ~/.cert/{nm-openvpn/,}
 )
 function _rm_files() (
+  local f
   cd ~ || return # subshell!
   for f in "${rm_rf[@]}"; do
     [ -e "$f" ] || [ -L "$f" ] || continue # the file exists? or is a link?
     rm -rf -- "$f" 2>/dev/null
   done
   for f in "${rmdir[@]}"; do
-    [ -e "$f" ] || [ -L "$f" ] || continue # the file exists? or is a link?
+    [ -e "$f" ] || [ -L "$f" ] || continue         # the file exists? or is a link?
+    [ -z "$(fuser "$f" 2>/dev/null)" ] || continue # is a process using this file? (A shell open here?)
     rmdir -- "$f" 2>/dev/null
   done
 )
 _rm_files
-unset f rm_rf rmdir _rm_files
+unset rm_rf rmdir _rm_files
+
+# Create the SSR config directory if it doesn't exist, it only respects XDG_CONFIG_HOME if it already exists.
+! has simplescreenrecorder || mkdir -p "$XDG_CONFIG_HOME/simplescreenrecorder"
+
+if has nmcli && nmcli con show --active | { ! grep -q -e '\bvpn\b' -e '\btun\b'; }; then
+  # If nmcli is installed and there's no active VPN connection, then delete ~/.cert/nm-openvpn/
+  rm -f -- ~/.cert/nm-openvpn/*
+  if [ -d ~/.cert/nm-openvpn/ ]; then
+    (cd ~ && rmdir -p -- .cert/nm-openvpn/ 2>/dev/null)
+  fi
+fi

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Creates a textimage function to convert input text to an output image
+
+# usage: textimage [input] [output] [font]
+function textimage() {
+  local in="${1:--}" out="${2:-out.png}"
+  local font="${3:-JetBrains-Mono-Regular}"
+  convert -size 1000x2000 xc:white -font "$font" -annotate +15+15 "@$in" -trim -bordercolor "#FFF" -border 10 +repage "$out"
+}

@@ -10,11 +10,11 @@ if ! command -v sudo &>/dev/null; then
 fi
 
 function _run_sudo() (
+  [ -z "${SUDO_VERBOSE:-}" ] || printf "%s\n" "> sudo ${*@Q}" || true
   # These will only be available if sudo -e is given. But, in that case, it will help avoid writing to $HOME
-  export XDG_STATE_HOME=~root/.local/state XDG_CACHE_HOME=~root/.cache
-  # export XDG_DATA_HOME=~root/.local/share XDG_CONFIG_HOME=~root/.config
-  if [ -n "${SUDO_VERBOSE:-}" ]; then printf "'%s' " sudo "$@" && printf '\n'; fi
-  exec sudo "$@" # subshell
+  # XDG_DATA_HOME=~root/.local/share XDG_CONFIG_HOME=~root/.config \
+  XDG_STATE_HOME=~root/.local/state XDG_CACHE_HOME=~root/.cache \
+    exec sudo "$@" # subshell
 )
 # could break if passed `sudo -o option_arg`
 # Can't fix that without parsing all of sudo's arguments correctly
@@ -36,17 +36,16 @@ function sudo() {
 
   if [ "$#" -eq 0 ] || [ -z "${1:-}" ]; then
     _run_sudo "${old_args[@]}" "$@" # options have been shifted off.
-    return "$?"
+    return
   fi
 
   cmd="$1"
   # can't use command -v because aliases and functions
-  path="$(which -- "$cmd" 3>/dev/null || printf '')"
+  path="$(which "$cmd" 3>/dev/null)" || true
   # use -e instead of -x because root may be able to execute it
   if [ -e "$path" ] || [ -L "$path" ]; then cmd="$path"; fi
   # remove cmd, then replace with new value
   args=("${old_args[@]}" "$cmd" "${@:2}")
 
   _run_sudo "${args[@]}"
-  return "$?"
 }

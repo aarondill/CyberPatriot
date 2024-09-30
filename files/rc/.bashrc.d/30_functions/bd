@@ -6,95 +6,72 @@
 # taken from https://github.com/vigneshwaranr/bd and
 # modified to work better
 #
-function bd() {
-  function help_msg() {
-    printf "Usage: bd [OPTION]... [PATTERN]\n"
-    printf "Quickly go back to a specific parent directory in bash.\n\n"
+function _bd_help_msg() {
+  printf '%s\n' "Usage: bd [OPTION]... [PATTERN]"
+  printf '%s\n' "Quickly go back to a specific parent directory in bash."
 
-    printf "\e[1mOPTIONS\e[0m\n"
-    printf "  %-28s %s\n" "-e" "PATTERN must fully match directory name"
-    printf "  %-28s %s\n" "-i" "PATTERN is case SENSITIVE"
-    printf "  %-28s %s\n" "-?, -h, --help" "Display this message"
+  printf '%s\n' "OPTIONS: "
+  printf '%s\n' "  -e          PATTERN must fully match directory name"
+  printf '%s\n' "  -i          PATTERN is case SENSITIVE"
+  printf '%s\n' "  -h, --help  Display this message"
 
-    printf "\n\e[1mALTERNATE USAGE EXAMPLES\e[0m\n"
-    printf "  %-28s %s\n" "\$(bd parentDir)/script.sh" "Execute \"script.sh\" in matching path"
-
+  return 0
+}
+newpwd() {
+  local oldpwd=$1             # store old
+  shift 1                     # remove oldpwd
+  shopt -s nocasematch        # set case insensive default
+  local exact=0               # default to false
+  while getopts ':ie' opt; do # check each argument
+    case "$opt" in
+    i) shopt -u nocasematch ;; # set case sensitive
+    e) exact=1 ;;              # Set exact match
+    \?)
+      printf '%s\n' "Invalid option: -$OPTARG" >&2
+      return 2
+      ;;
+    esac
+  done
+  shift "$((OPTIND - 1))"
+  local pattern="$*"
+  if [ "$exact" -eq 1 ]; then # if exact
+    # fully match - removes everything after the pattern
+    printf '%s\n' "${oldpwd/\/$pattern\/*/\/$pattern}" # /pattern/* -- >/pattern
     return 0
-  }
+  fi
+  local findRegex="^(.+)?${pattern}[^/]*\/"
+  [[ $oldpwd =~ $findRegex ]] || return 1
+  printf '%s\n' "${BASH_REMATCH[0]}"
+}
 
-  newpwd() (
-    local oldpwd NEWPWD exact EXIT
-    oldpwd=$1                   # store old
-    shift 1                     # remove oldpwd
-    shopt -s nocasematch        # set case insensive default
-    exact=''                    # default to false
-    while getopts ':ie' opt; do # check each argument
-      case $opt in
-      i)
-        shopt -u nocasematch # set case sensitive
-        ;;
-      e)
-        exact=t # Set exact match
-        ;;
-      \?)
-        help_msg
-        printf "Invalid option: -%s" "$OPTARG"
-        return 2
-        ;;
-      esac
-    done
-    shift "$((OPTIND - 1))"
-
-    pattern=$*
-    if [[ -z "$exact" ]]; then # if not exact (default)
-      #shellcheck disable=SC2001
-      findRegex="^(.+)?${pattern}[^/]*\/"
-      [[ $oldpwd =~ $findRegex ]]
-      echo "${BASH_REMATCH[0]}"
-
-    else # is exact
-      # fully match - removes everything after the pattern
-      echo "${oldpwd/\/$pattern\/*/\/$pattern}" # /pattern/* -- >/pattern
-
-    fi
-
-  )
-
+function bd() {
   # Show help
-  [ "$#" -eq 0 ] && help_msg && return 2
+  [ "$#" -eq 0 ] && _bd_help_msg && return 2
   for arg in "$@"; do
-    if [ "$arg" = '-?' ] ||
-      [ "$arg" = '--help' ] ||
-      [ "$arg" = '-h' ]; then
-      help_msg
-      return 0
-    fi
+    case "$arg" in
+    '-?' | --help | -h) _bd_help_msg && return 0 ;;
+    esac
   done
 
   # Allow `bd -` to act like `cd -`
   # And allow `bd /` --> `cd /`
   # And allow `bd /` --> `cd /`
-  if [ "$1" = '-' ] || [ "$1" = '/' ] || [ "$1" = '~' ]; then
-    builtin cd "$1" || return && return
+  case "$1" in
+  - | / | ~) builtin cd "$1" || return && return ;;
+  esac
+
+  local newpwd
+  newpwd=$(newpwd "$PWD" "$@") || return
+  # Check that the newpwd is not the current working directory
+  if [ -z "$newpwd" ] || [ "$newpwd" = "$PWD" ]; then
+    printf '%s\n' "No such occurrence." >&2
+    return 1
   fi
 
-  oldpwd=$(pwd)                   # Store old pwd
-  NEWPWD=$(newpwd "$oldpwd" "$@") # Get new PWD
-  EXIT=$?                         # Store exit code
-  # Return if failed
-  if [[ $EXIT -gt 0 ]]; then
-    printf '%s\n' "$NEWPWD" # Print output
-    return $EXIT            # Exit on failure
-  fi
-
-  # Check if it wouldn't move
-  if [ -z "$NEWPWD" ] || [ "$NEWPWD" = "$oldpwd" ]; then
-    echo "No such occurrence." >&2
-  else
-    # Output found
-    printf '%s\n' "$NEWPWD"
-    # If stdout is tty, cd to found
-    if [[ -t 1 ]]; then builtin cd "$NEWPWD" || return; fi
+  # Output found
+  printf '%s\n' "$newpwd"
+  if [ -t 1 ]; then # If stdout is tty, cd to found
+    builtin cd "$newpwd" || return
   fi
 }
 

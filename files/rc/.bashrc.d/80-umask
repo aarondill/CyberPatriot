@@ -1,0 +1,7 @@
+#! /usr/bin/env bash
+
+# ~/.bashrc.d/80-umask
+#
+# Sets the umask to include group access
+
+umask u=rwx,g=rwx,o=rx

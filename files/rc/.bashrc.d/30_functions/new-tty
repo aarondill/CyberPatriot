@@ -6,7 +6,9 @@
 #
 function new-tty() {
   if [ "${1:-}" = "--help" ]; then
-    printf '%s\n' "new-tty" "" "Creates a new disowned terminal instance then exits this one"
+    printf '%s\n' "new-tty"
+    printf '%s\n' ""
+    printf '%s\n' "Creates a new disowned terminal instance then exits this one"
     return 0
   fi
 
@@ -15,6 +17,7 @@ function new-tty() {
 
   if ! command -v "$terminal" &>/dev/null; then
     printf "%s\n" "could not find $terminal" >&2
+    return 1
   fi
   "$terminal" "${args[@]}" &
   disown

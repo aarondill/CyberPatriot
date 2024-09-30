@@ -5,7 +5,37 @@
 # Displays count of files in home directory if shlvl = 1
 # This should be after neofetch
 #
-if [ "$SHLVL" -gt "1" ]; then return 0; fi
-if command -v file-count &>/dev/null; then
-  printf '%s\n' "$(file-count "$HOME") files found in $HOME"
-fi
+[ "$SHLVL" -eq 1 ] || return 0
+# function wrapper so we can use local
+function _home_count() {
+  unset -f "${FUNCNAME[0]}" # self destruct
+  local dotglob=-s
+  shopt -q dotglob || dotglob=-u
+  shopt -s dotglob    # enable dotglob
+  declare -A files=() # all files under $HOME
+  local f && for f in ~/*; do files["$f"]=1; done
+  shopt "$dotglob" dotglob # restore dotglob
+
+  printf '%s\n' "${#files[@]} files found in $HOME"
+
+  local countfile=~/.cache/file_count_home
+  if ! [ -f "$countfile" ]; then
+    printf '%s\0' "${!files[@]}" >"$countfile" # print null seperated list of files to countfile and exit
+    return 0
+  fi
+
+  local filename && declare -A prevfiles=()
+  while IFS= read -r -d '' filename <&3; do prevfiles["$filename"]=1; done 3<"$countfile"
+
+  local found=0
+  local file && for file in "${!prevfiles[@]}"; do
+    [ -z "${files["$file"]}" ] || continue
+    found=1 && printf '%s\n' "Deleted $file"
+  done
+  local file && for file in "${!files[@]}"; do
+    [ -z "${prevfiles["$file"]}" ] || continue
+    found=1 && printf '%s\n' "Added $file"
+  done
+  [ $found -eq 0 ] || printf '%s\n' "Note: rm $countfile to reset this warning"
+
+} && _home_count

@@ -14,5 +14,5 @@ function private() {
 }
 alias private='private ' # expand aliases
 function soh() {
-  sudo -- env PATH="$PATH" bash -c 'cd ~/Documents/.soh/; exec bash -i'
+  sudo env PATH="$PATH" bash -c 'cd ~/Documents/.soh/; exec bash -i'
 }

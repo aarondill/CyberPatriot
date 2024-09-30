@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# ~/.bashrc.d/30_functions/age
+# returns age of file in seconds
+function _age_displaytime {
+  local T="$1"
+  local Y=$((T / 60 / 60 / 24 / 31 / 12))
+  local MO=$((T / 60 / 60 / 24 / 31 % 12)) # Note: always assuming 31 in a month!
+  local D=$((T / 60 / 60 / 24 % 31))
+  local H=$((T / 60 / 60 % 24))
+  local M=$((T / 60 % 60))
+  local S=$((T % 60))
+  ((Y > 0 || MO > 0)) && printf "approx. "
+  ((Y > 0)) && printf '%d years ' "$Y"
+  ((MO > 0)) && printf '%d months ' "$MO"
+  ((D > 0)) && printf '%d days ' "$D"
+  ((H > 0)) && printf '%d hours ' "$H"
+  ((M > 0)) && printf '%d minutes ' "$M"
+  ((Y > 0 || MO > 0 || D > 0 || H > 0 || M > 0)) && printf 'and '
+  printf '%d seconds' "$S"
+}
+
+function age() {
+  local file
+  for file; do
+    [ -L "$file" ] || [ -f "$file" ] || {
+      printf "%s\n" "${FUNCNAME[0]}: cannot stat '$file': No such file or directory" >&2 || true
+      continue
+    }
+    local current birthdate access_date mod_date
+    current=$(date +%s)
+    birthdate=$(stat -c "%W" -- "$file")
+    access_date=$(stat -c "%X" -- "$file")
+    mod_date=$(stat -c "%Y" -- "$file")
+    local since_birth=$(("$current" - "$birthdate"))
+    local since_access=$(("$current" - "$access_date"))
+    local since_mod=$(("$current" - "$mod_date"))
+    local format='%s: %d %d %d\n'
+    if [ -t 1 ]; then
+      format='%s:\n\tcreated %s ago\n\tmodified %s ago\n\taccessed %s ago.\n'
+      since_birth="$(_age_displaytime "$since_birth")"
+      since_mod="$(_age_displaytime "$since_mod")"
+      since_access="$(_age_displaytime "$since_access")"
+    fi
+    # shellcheck disable=SC2059 # The variable *is* the format string.
+    printf "$format" "$file" "$since_birth" "$since_mod" "$since_access" || true
+  done
+}

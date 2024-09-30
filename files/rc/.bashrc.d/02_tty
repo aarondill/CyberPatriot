@@ -2,16 +2,11 @@
 # ~/.bashrc.d/02_tty
 # Handle tty specific settings
 
-if ! [ "${TERM,,}" = "linux" ]; then
-  return
-fi
-case "$(tty)" in
-/dev/tty*) ;;
-*) return ;;
-esac
+[ "${TERM,,}" = "linux" ] || return 0
+case "$(tty)" in /dev/tty*) ;; *) return 0 ;; esac
 
 # merge config with tty-config.yml to disable nerd-fonts
-export LG_CONFIG_FILE="${XDG_CONFIG_HOME}/lazygit/config.yml,${XDG_CONFIG_HOME}/lazygit/tty-config.yml"
+export LG_CONFIG_FILE="$XDG_CONFIG_HOME/lazygit/config.yml,$XDG_CONFIG_HOME/lazygit/tty-config.yml"
 
 if command -v setleds &>/dev/null; then
   setleds -D +num
@@ -24,4 +19,4 @@ if [ -f /run/motd.dynamic ]; then
 elif [ -f /var/run/motd.dynamic ]; then
   \cat /var/run/motd.dynamic
 fi
-[ -f /etc/motd ] && \cat /etc/motd
+if [ -f /etc/motd ]; then \cat /etc/motd; fi

@@ -5,9 +5,19 @@
 # Displays neofetch if shlvl = 1
 # This should be before backup information
 #
-if [ "$NONEOFETCH" = "1" ]; then
+if [ -n "${NONEOFETCH:-}" ]; then
   unset NONEOFETCH
   return 0
 fi
-if [ "$SHLVL" -gt "1" ]; then return 0; fi
-if command -v neofetch &>/dev/null; then neofetch; fi
+[ "$SHLVL" -eq 1 ] || return 0
+
+if has fastfetch; then
+  if [ -n "$DISPLAY" ]; then
+    # HACK: fastfetch messes up the output when the terminal is resized while it is running
+    # Give the WM time to resize the terminal before we run fastfetch
+    sleep .3
+  fi
+  fastfetch
+elif has neofetch; then
+  neofetch
+fi

@@ -1,27 +1,44 @@
 #!/usr/bin/env bash
-if ! command -v fff &>/dev/null; then return; fi
-function fff() {
-  command fff "$@"
-  local fff_cache="${XDG_CACHE_HOME:-${HOME}/.cache}/fff"
-  local file="${FFF_CD_FILE:-"$cache/.fff_d"}"
-  if [ -f "$file" ]; then
-    cd "$(cat -- "$file")" || return
-    rm -f -- "$file" 2>/dev/null
-    rmdir -- "$fff_cache" 2>/dev/null
+if command -v fff &>/dev/null; then
+  function fff() {
+    command fff "$@"
+    local fff_cache="${XDG_CACHE_HOME:-${HOME}/.cache}/fff"
+    local file="${FFF_CD_FILE:-"$cache/.fff_d"}"
+    if [ -f "$file" ]; then
+      cd "$(cat -- "$file")" || return
+      rm -f -- "$file" 2>/dev/null
+      rmdir -- "$fff_cache" 2>/dev/null
+    fi
+  }
+  # move the cd file
+  export FFF_CD_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/fff_cd"
+  # Show/Hide hidden files on open.
+  export FFF_HIDDEN=1
+  # File Opener
+  export FFF_OPENER="xdg-open"
+  # File Attributes Command
+  export FFF_STAT_CMD="stat"
+  # Trash Directory
+  export FFF_TRASH=~/.local/share/Trash/files
+  if command -v trash &>/dev/null; then
+    export FFF_TRASH_CMD="trash"
   fi
-}
-# move the cd file
-export FFF_CD_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/fff_cd"
-# Show/Hide hidden files on open.
-export FFF_HIDDEN=1
-# File Opener
-export FFF_OPENER="xdg-open"
-# File Attributes Command
-export FFF_STAT_CMD="stat"
-# Trash Directory
-export FFF_TRASH=~/.local/share/Trash/files
-if command -v trash &>/dev/null; then
-  export FFF_TRASH_CMD="trash"
+  export FFF_FAV1=~/code
+  export FFF_FAV2=~/.bashrc.d
 fi
-export FFF_FAV1=~/code
-export FFF_FAV2=~/.bashrc.d
+
+if command -v nnn &>/dev/null; then
+  function nnn() {
+    # Block nesting of nnn in subshells
+    [ "${NNNLVL:-0}" -eq 0 ] || {
+      echo "nnn is already running" >&2
+      return 1
+    }
+    export NNN_TMPFILE="${XDG_CONFIG_HOME:-$HOME/.config}/nnn/.lastd"
+    command nnn "$@"
+    ! [ -f "$NNN_TMPFILE" ] || {
+      . "$NNN_TMPFILE"
+      rm -f -- "$NNN_TMPFILE" &>/dev/null
+    }
+  }
+fi
