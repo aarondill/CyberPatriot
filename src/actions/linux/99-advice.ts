@@ -13,6 +13,7 @@ export function run() {
   1. Check which processes are using the network ("netstat --inet -ap")
   2. Check for open ports ("sudo netstat -tunlp")
 5. Use https://github.com/CISOfy/lynis to find other vulnerabilities
+6. Make *sure* you've done all required steps in the README! (users, groups, programs, etc)
     `);
 }
 export const description = `Additional advice for manual intervention`;
