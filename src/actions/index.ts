@@ -167,7 +167,13 @@ export async function runActions(opts: ActionOptions): Promise<boolean> {
 		const msg = `run action '${descColor}'`;
 		if (!(await confirm(msg, true))) continue;
 
-		const suc = await action.default(opts);
+		let suc;
+		try {
+			suc = await action.default(opts);
+		} catch (e) {
+			error(String(e));
+			suc = false;
+		}
 		if (suc === false) {
 			error("Action failed!");
 			if (!(await confirm("Do you want to continue?", false))) return false;

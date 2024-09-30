@@ -12,5 +12,7 @@ assert<Extends<typeof import("./00-fix-apt.js"), ActionModule>>();
 assert<Extends<typeof import("./00-unlock-root.js"), ActionModule>>();
 assert<Extends<typeof import("./10-perms.js"), ActionModule>>();
 assert<Extends<typeof import("./20-copy-rcfiles.js"), ActionModule>>();
+assert<Extends<typeof import("./21-fix-sshd.js"), ActionModule>>();
+assert<Extends<typeof import("./22-firewall.js"), ActionModule>>();
 assert<Extends<typeof import("./30-remove-software.js"), ActionModule>>();
 assert<Extends<typeof import("./30-users.js"), ActionModule>>();
