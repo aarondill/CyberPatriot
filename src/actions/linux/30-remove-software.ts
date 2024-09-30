@@ -10,8 +10,7 @@ export async function run() {
 			.quiet()
 			.stdio("ignore", "ignore", "ignore");
 		if (exitCode !== 0) continue; // This is not installed
-		if (!(await confirm(`Would you like to remove the ${p} package?`, true)))
-			continue;
+		if (!(await confirm(`remove the ${p} package?`, true))) continue;
 		await $`apt autopurge -- ${p}`;
 	}
 	return true;

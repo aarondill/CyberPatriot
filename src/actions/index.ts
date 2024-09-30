@@ -176,7 +176,7 @@ export async function runActions(opts: ActionOptions): Promise<boolean> {
 		}
 		if (suc === false) {
 			error("Action failed!");
-			if (!(await confirm("Do you want to continue?", false))) return false;
+			if (!(await confirm("continue?", false))) return false;
 		}
 	}
 	console.log(colors(chalk.bold.green, "All actions completed successfully."));

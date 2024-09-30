@@ -12,23 +12,23 @@ declare global {
 }
 // }}}
 // import "zx/globals";
-import { $, which } from "zx";
-import {
-	abort,
-	confirm,
-	error,
-	isVM,
-	warn,
-	isWindows,
-	assertRoot,
-	findFile,
-	getHome,
-} from "./util/index.js";
 import { hostname, userInfo } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { $, which } from "zx";
 import { runActions } from "./actions/index.js";
 import { parseConfig } from "./config.js";
-import { fileURLToPath } from "node:url";
+import {
+    abort,
+    assertRoot,
+    confirm,
+    error,
+    findFile,
+    getHome,
+    isVM,
+    isWindows,
+    warn,
+} from "./util/index.js";
 
 $.prefix = "set -euC -o pipefail;";
 // Check $.shell before running which.sync
