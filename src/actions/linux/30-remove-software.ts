@@ -1,7 +1,7 @@
 import { $ } from "zx";
-import type { Action } from "../index.js";
 import { confirm } from "../../util/flow.js";
-const commonProhibitedSoftware = ["ophcrack", "wireshark"];
+import type { Action } from "../index.js";
+const commonProhibitedSoftware = ["ophcrack", "wireshark", "aisleriot"];
 
 export async function run() {
 	for (const p of commonProhibitedSoftware) {
