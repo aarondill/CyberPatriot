@@ -1,6 +1,6 @@
 import { $ } from "zx";
-import type { Action } from "../index.js";
 import { warn } from "../../util/flow.js";
+import type { Action } from "../index.js";
 
 export async function run() {
 	console.log("Updating root password...");

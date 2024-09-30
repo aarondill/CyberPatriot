@@ -1,11 +1,11 @@
-import path from "node:path";
 import crypto from "node:crypto";
-import type { Action } from "../index.js";
-import { downloadFile } from "../../util/file.js";
 import { createReadStream } from "node:fs";
 import fs from "node:fs/promises";
+import path from "node:path";
 import { $ } from "zx";
+import { downloadFile } from "../../util/file.js";
 import { commandStatus, warn } from "../../util/index.js";
+import type { Action } from "../index.js";
 
 const NEOVIM_REPO = "https://github.com/neovim/neovim";
 const NVIM_BIN = "/usr/bin/nvim";

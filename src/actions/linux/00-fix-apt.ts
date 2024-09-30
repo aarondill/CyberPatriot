@@ -1,14 +1,13 @@
 import fs from "node:fs/promises";
 import { $, echo, which } from "zx";
-import type { Action } from "../index.js";
 import {
-	error,
-	isProcessOutput,
-	useRoot,
-	backup,
-	mapFile,
-	confirm,
+    backup,
+    confirm,
+    error,
+    isProcessOutput,
+    mapFile,
 } from "../../util/index.js";
+import type { Action } from "../index.js";
 
 // NOTE: because euid is changed, not uid, child processes are spawned as root!
 
@@ -39,8 +38,8 @@ async function fixApt() {
 			echo(source);
 		}
 	}
-	await useRoot(backup, "/etc/apt/sources.list");
-	await useRoot(mapFile, "/etc/apt/sources.list", line => {
+	await backup("/etc/apt/sources.list");
+	await mapFile("/etc/apt/sources.list", line => {
 		line = line.trim().replaceAll(/(\s){2,}/g, "$1"); // collapse whitespace
 		if (line === "") return line;
 		if (line.startsWith("deb cdrom:")) return `# ${line}`;

@@ -1,17 +1,17 @@
 import fs from "node:fs/promises";
+import { isNativeError } from "util/types";
 import { $, question } from "zx";
 import {
-	commandStatus,
-	confirm,
-	error,
-	getURL,
-	openFile,
-	warn,
+    commandStatus,
+    confirm,
+    error,
+    getURL,
+    openFile,
+    warn,
 } from "../../util/index.js";
 import type { AdminUser } from "../../util/users.js";
 import { getUsersFromURL } from "../../util/users.js";
 import type { Action } from "../index.js";
-import { isNativeError } from "util/types";
 
 // for await (const [username, uid] of getNonSystemUsers())
 async function* getNonSystemUsers(): AsyncGenerator<[string, number]> {

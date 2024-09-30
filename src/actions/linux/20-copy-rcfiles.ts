@@ -1,14 +1,14 @@
-import { backup, commandStatus, error, warn } from "../../util/index.js";
-import type { Action, ActionOptions } from "../index.js";
-import { id } from "tsafe";
-import { fileExists, openFile, walk } from "../../util/file.js";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
 import fs from "node:fs/promises";
-import { egid, euid } from "../../util/root.js";
-import { isNodeError } from "../../util/types.js";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { id } from "tsafe";
 import { $, which } from "zx";
 import type { YamlConfig } from "../../config.js";
+import { fileExists, openFile, walk } from "../../util/file.js";
+import { backup, commandStatus, error, warn } from "../../util/index.js";
+import { egid, euid } from "../../util/root.js";
+import { isNodeError } from "../../util/types.js";
+import type { Action, ActionOptions } from "../index.js";
 
 async function updateCopy(home: string, root: string, rcfiles: string) {
 	if (!(await fileExists(rcfiles))) {

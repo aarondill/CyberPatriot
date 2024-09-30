@@ -5,16 +5,16 @@ handle
 /files/perms.txt -- set file permissions if the file exists `PERM NAME WITH SPACES`
 */
 
-import { fileURLToPath } from "node:url";
-import type { Action } from "../index.js";
-import path from "node:path";
-import fs from "node:fs/promises";
 import type { PathLike } from "node:fs";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { id } from "tsafe";
+import backup from "../../util/backup.js";
 import { fileExists, findFile, openFile, walk } from "../../util/file.js";
 import { confirm, error } from "../../util/flow.js";
-import backup from "../../util/backup.js";
-import { id } from "tsafe";
 import { isNodeError } from "../../util/types.js";
+import type { Action } from "../index.js";
 const filename = fileURLToPath(import.meta.url);
 
 async function handlePerms(permsFile: PathLike) {
