@@ -9,5 +9,5 @@ packages:
 clone:
   # Relative to $HOME
   ~/.config/nvim:
-    url: "https://github.com/aarondill/LazyVim.git"
+    url: "https://github.com/aarondill/nvim.git"
     args: ["--filter=tree:0"]
