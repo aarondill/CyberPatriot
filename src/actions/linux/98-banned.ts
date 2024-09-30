@@ -34,7 +34,7 @@ export async function run({ home }: ActionOptions) {
 	console.log(
 		"This is very slow, and likely will have a lot of output/false positives"
 	);
-	const shouldContinue = await confirm("continue");
+	const shouldContinue = await confirm("continue", true);
 	if (!shouldContinue) return true;
 	const outfile = path.join(home, "banned-files.txt");
 	console.log(
@@ -58,7 +58,7 @@ export async function run({ home }: ActionOptions) {
 
 	await fs.writeFile(outfile, bannedFiles.join("\n")); // write to log file
 	console.log(`Found ${bannedFiles.length} banned files: `);
-	const show = await confirm("show them all");
+	const show = await confirm("show them all", true);
 	if (show) console.log(bannedFiles.join("\n"));
 	return true;
 }
