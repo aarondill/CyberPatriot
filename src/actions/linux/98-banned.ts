@@ -40,9 +40,9 @@ export async function run({ home }: ActionOptions) {
 	const promises = [];
 	for (const chunk of chunkIntoN(bannedFileExtensions, N)) {
 		if (chunk.length === 0) continue;
-		const opts = chunk
-			.flatMap(ext => ["-iname", `*${ext}`, "-o"])
-			.with(-1, "-print"); // replace last "-o" with "-print"
+		const opts = chunk.flatMap(ext => ["-iname", `*${ext}`, "-o"]);
+		opts.pop(); // remove the last -o
+		// NOTE: Do *NOT* put an explicit -print here. It will break the output (only prints the last condition).
 		promises.push($`find /home ${opts}`.nothrow().quiet());
 	}
 	const results = await Promise.allSettled(promises);
@@ -53,7 +53,12 @@ export async function run({ home }: ActionOptions) {
 	const bannedFiles = successes
 		.flatMap(result => result.stdout.split("\n"))
 		.filter(Boolean)
-		.filter(file => !file.includes("/snap/")); // I *HATE* Snap.
+		.filter(
+			file =>
+				!file.includes("/snap/") && // I *HATE* Snap.
+				!file.includes("/nvim/") && // rule out my added nvim config.
+				!file.includes("/thumbnails/") // rule out thumbnails
+		);
 
 	await fs.writeFile(outfile, bannedFiles.join("\n")); // write to log file
 	console.log(`Found ${bannedFiles.length} banned files: `);
