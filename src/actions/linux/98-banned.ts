@@ -43,7 +43,7 @@ export async function run({ home }: ActionOptions) {
 		const opts = chunk
 			.flatMap(ext => ["-iname", `*${ext}`, "-o"])
 			.with(-1, "-print"); // replace last "-o" with "-print"
-		promises.push($`find / ${opts}`.nothrow().quiet());
+		promises.push($`find /home ${opts}`.nothrow().quiet());
 	}
 	const results = await Promise.allSettled(promises);
 
