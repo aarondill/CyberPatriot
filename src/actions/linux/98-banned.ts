@@ -1,23 +1,19 @@
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { $ } from "zx";
-import type { Action } from "../index.js";
+import { confirm } from "../../util/flow.js";
+import type { Action, ActionOptions } from "../index.js";
 
 const bannedFileExtensions: string[] = [
 	[
-		[".3g2", ".3gp", ".M2TS", ".MTS", ".TS", ".amv", ".asf"],
-		[".avi", ".drc", ".f4a", ".f4b", ".f4p", ".f4v", ".flv", ".gif"],
-		[".gifv", ".m2v", ".m4p", ".m4v", ".mkv", ".mng", ".mov", ".mp2", ".mp4"],
-		[".mpe", ".mpeg", ".mpg", ".mpv", ".mxf", ".nsv", ".ogg"],
-		[".ogv", ".qt", ".rm", ".rmvb", ".roq", ".svi", ".viv", ".vob", ".webm"],
-		[".wmv", ".yuv"],
+		[".avi", ".gif", ".gifv", ".mkv", ".mov", ".mp4"],
+		[".mpeg", ".mpg", ".mpv", ".ogg", ".ogv", ".webm", ".wmv"],
 	], // Videos
 	[".heic", "jpeg", ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif"], // Images
 	[
-		[".3gp", ".aa", ".aac", ".aax", ".act", ".aiff", ".alac", ".amr", ".ape"],
-		[".au", ".awb", ".dss", ".dvf", ".flac", ".gsm", ".iklax", ".ivs", ".m4a"],
-		[".m4b", ".m4p", ".mmf", ".movpkg", ".mp3", ".mpc", ".msv", ".nmf"],
-		[".ogg", ".oga", ".mogg", ".opus", ".ra", ".rm", ".raw", ".rf64"],
-		[".sln", ".tta", ".voc", ".vox", ".wav", ".wma", ".wv"],
-		[".webm", ".8svx", ".cda"],
+		[".aac", ".flac", ".m4a", ".m4b", ".mp3", ".ogg"],
+		[".oga", ".wav", ".wma", ".webm"],
 	], // Audio
 	[
 		[".doc", ".docx", ".html", ".odt", ".pdf", ".xls"],
@@ -26,6 +22,7 @@ const bannedFileExtensions: string[] = [
 ].flat(2);
 
 // Source: https://www.30secondsofcode.org/js/s/split-array-into-chunks/
+// Note: may include an empty extra chunk. I don't want to fix it.
 const chunkIntoN = <T>(arr: T[], n: number): T[][] => {
 	const size = Math.ceil(arr.length / n);
 	return Array.from({ length: n }, (_, i) =>
@@ -33,19 +30,38 @@ const chunkIntoN = <T>(arr: T[], n: number): T[][] => {
 	);
 };
 
-export async function run() {
-	const N = 30;
+export async function run({ home }: ActionOptions) {
+	console.log(
+		"This is very slow, and likely will have a lot of output/false positives"
+	);
+	const shouldContinue = await confirm("continue");
+	if (!shouldContinue) return true;
+	const outfile = path.join(home, "banned-files.txt");
+	console.log(
+		`Searching for banned files... Output will be logged to ${outfile}.`
+	);
+	const N = os.availableParallelism();
 	const promises = [];
 	for (const chunk of chunkIntoN(bannedFileExtensions, N)) {
+		if (chunk.length === 0) continue;
 		const opts = chunk
 			.flatMap(ext => ["-iname", `*${ext}`, "-o"])
 			.with(-1, "-print"); // replace last "-o" with "-print"
 		promises.push($`find / ${opts}`.nothrow().quiet());
 	}
-	const results = await Promise.all(promises);
-	const bannedFiles = results.flatMap(result => result.stdout.split("\n"));
-	console.log(`Found ${bannedFiles.length} banned files: `, bannedFiles);
+	const results = await Promise.allSettled(promises);
+
+	const successes = results
+		.filter(result => result.status === "fulfilled")
+		.map(result => result.value);
+	const bannedFiles = successes.flatMap(result => result.stdout.split("\n"));
+
+	await fs.writeFile(outfile, bannedFiles.join("\n")); // write to log file
+	console.log(`Found ${bannedFiles.length} banned files: `);
+	const show = await confirm("show them all");
+	if (show) console.log(bannedFiles.join("\n"));
+	return true;
 }
 
-export const description = `Automatically (try to) find banned files`;
+export const description = `Automatically (try to) find banned files. SLOW!`;
 export default run satisfies Action;
