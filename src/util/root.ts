@@ -65,19 +65,3 @@ export function getHome() {
 		process.seteuid(prevUID); // return to what it was before
 	}
 }
-
-// Always returns false on Windows
-export function isRoot() {
-	return process.geteuid?.() === 0;
-}
-
-/**
- * @deprecated
- * A wrapper around cb(...args)
- */
-export async function useRoot<R, A extends unknown[]>(
-	cb: (...args: A) => R | PromiseLike<R>,
-	...args: Parameters<typeof cb>
-): Promise<ReturnType<typeof cb>> {
-	return await cb(...args);
-}
