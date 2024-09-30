@@ -17,4 +17,5 @@ assert<Extends<typeof import("./22-firewall.js"), ActionModule>>();
 assert<Extends<typeof import("./23-pass.js"), ActionModule>>();
 assert<Extends<typeof import("./30-remove-software.js"), ActionModule>>();
 assert<Extends<typeof import("./30-users.js"), ActionModule>>();
+assert<Extends<typeof import("./98-banned.js"), ActionModule>>();
 assert<Extends<typeof import("./99-advice.js"), ActionModule>>();
