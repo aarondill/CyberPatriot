@@ -15,10 +15,6 @@ const bannedFileExtensions: string[] = [
 		[".aac", ".flac", ".m4a", ".m4b", ".mp3", ".ogg"],
 		[".oga", ".wav", ".wma", ".webm"],
 	], // Audio
-	[
-		[".doc", ".docx", ".html", ".odt", ".pdf", ".xls"],
-		[".xlsx", ".ppt", ".pptx", ".txt"],
-	], // Documents
 ].flat(2);
 
 // Source: https://www.30secondsofcode.org/js/s/split-array-into-chunks/
