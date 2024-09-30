@@ -2,9 +2,13 @@
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 export type ActionRet = boolean | undefined | null | void;
 export type ActionOptions = {
+	/** The arguments passed to the script */
 	args: string[];
+	/** The config object */
 	config: YamlConfig;
+	/** The path to the root directory of the script */
 	root: string;
+	/** The path to the user's home directory */
 	home: string;
 };
 /**
@@ -27,20 +31,20 @@ export type ActionModuleOthers = {
 };
 export type ActionModule = ActionModuleIndexJS | ActionModuleOthers;
 
-import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
 import path from "node:path";
-import {
-	assertDynamicImport,
-	colors,
-	confirm,
-	error,
-	fileExists,
-	warn,
-} from "../util/index.js";
+import { fileURLToPath } from "node:url";
 import { assert, is, typeGuard } from "tsafe";
 import { chalk } from "zx";
 import type { YamlConfig } from "../config.js";
+import {
+    assertDynamicImport,
+    colors,
+    confirm,
+    error,
+    fileExists,
+    warn,
+} from "../util/index.js";
 
 // Returns a string that can be used to import() actions
 // thisfile is used for recursive imports
