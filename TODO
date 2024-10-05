@@ -1,5 +1,8 @@
 <!-- vim:set ft=markdown: -->
+
+- Use nala instead of apt on Ubuntu
+  - Parallel downloads could save a competition.
 - Make apt/sources.list work on Debian too
-  - Check different repo urls (allow any?)
-- Test on windows!
+  - Check different repo URLs (allow any?)
+- Test on Windows!
   - Develop parts for windows (actions/windows/index.js)
