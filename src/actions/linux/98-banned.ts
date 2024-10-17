@@ -17,6 +17,13 @@ const bannedFileExtensions: string[] = [
 	], // Audio
 ].flat(2);
 
+const FILE_PATH_ALLOWED = [
+	"/snap/", // I *HATE* Snap.
+	"/nvim/", // rule out my added nvim config.
+	"/thumbnails/", // rule out thumbnails
+	"/.config/google-chrome", // rule out google-chrome
+];
+
 // Source: https://www.30secondsofcode.org/js/s/split-array-into-chunks/
 // Note: may include an empty extra chunk. I don't want to fix it.
 const chunkIntoN = <T>(arr: T[], n: number): T[][] => {
@@ -53,12 +60,7 @@ export async function run({ home }: ActionOptions) {
 	const bannedFiles = successes
 		.flatMap(result => result.stdout.split("\n"))
 		.filter(Boolean)
-		.filter(
-			file =>
-				!file.includes("/snap/") && // I *HATE* Snap.
-				!file.includes("/nvim/") && // rule out my added nvim config.
-				!file.includes("/thumbnails/") // rule out thumbnails
-		);
+		.filter(file => !FILE_PATH_ALLOWED.some(path => file.includes(path)));
 
 	await fs.writeFile(outfile, bannedFiles.join("\n")); // write to log file
 	console.log(`Found ${bannedFiles.length} banned files: `);
