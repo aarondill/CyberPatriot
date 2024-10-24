@@ -1,5 +1,6 @@
 // Asserts that the process is running as root. Also sets the euid as non-root.
 import os from "node:os";
+import { assert } from "tsafe";
 
 export let euid: number;
 export let egid: number;
@@ -9,13 +10,13 @@ let assertHasRunSuccessfully = false;
 export function assertRoot(): string | undefined {
 	if (assertHasRunSuccessfully) return; // This should be safe to use repeatedly
 	if (
-		!process.geteuid ||
-		!process.seteuid ||
-		!process.getegid ||
-		!process.setegid
+		typeof process.geteuid !== "function" ||
+		typeof process.seteuid !== "function" ||
+		typeof process.getegid !== "function" ||
+		typeof process.setegid !== "function"
 	)
 		return; // Windows
-	if (process.geteuid() !== 0)
+	if (process.geteuid?.() !== 0)
 		return "This script should be run as root (using sudo)";
 
 	const userid = (process.env.SUDO_UID ?? "").trim();
@@ -36,32 +37,32 @@ export function assertRoot(): string | undefined {
 	assertHasRunSuccessfully = true;
 }
 
-let cachedHome: string | undefined;
-// This function will return the home directory of the current *non-root* user.
-// This should be used instead of os.homedir
-// This should be used instad of $HOME because the sudo command will set the HOME variable
-export function getHome() {
-	if (cachedHome) return cachedHome;
-	const { homedir } = os.userInfo(); // use userInfo instead of os.homedir because sudo will set the HOME variable.
+function asUser<Args extends unknown[], T>(
+	run: (...a: Args) => T,
+	...args: Args
+): T {
 	const prevUID = process.geteuid?.();
 	if (
-		// windows
-		!process.geteuid ||
-		!process.seteuid ||
-		prevUID === undefined ||
-		// we are already non-root. Don't change the euid.
-		euid === prevUID
-	) {
-		cachedHome = homedir;
-		return homedir;
-	}
+		typeof process.geteuid !== "function" || // windows
+		typeof process.seteuid !== "function" ||
+		typeof process.getegid !== "function" ||
+		typeof process.setegid !== "function" ||
+		euid === prevUID // we are already non-root. Don't change the euid.
+	)
+		return run(...args);
+	assert(prevUID !== undefined, "Something went terribly wrong!"); // bug
 
-	// We are currently root. We need to deescalate so os.userInfo can get the right user
+	// We are currently root. We need to deescalate
 	try {
 		process.seteuid(euid); // deescale from root to non-root
-		cachedHome = os.userInfo().homedir;
-		return cachedHome;
+		return run(...args);
 	} finally {
 		process.seteuid(prevUID); // return to what it was before
 	}
 }
+
+// This function will return the home directory of the current *non-root* user.
+// This should be used instead of os.homedir
+// This should be used instad of $HOME because the sudo command will set the HOME variable
+// use userInfo instead of os.homedir because sudo will set the HOME variable.
+export const userInfo = asUser.bind(os.userInfo);

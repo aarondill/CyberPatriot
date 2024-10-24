@@ -8,6 +8,7 @@ export type ActionOptions = {
 	config: YamlConfig;
 	/** The path to the root directory of the script */
 	root: string;
+	userInfo: UserInfo<string>;
 	/** The path to the user's home directory */
 	home: string;
 };
@@ -38,13 +39,14 @@ import { assert, is, typeGuard } from "tsafe";
 import { chalk } from "zx";
 import type { YamlConfig } from "../config.js";
 import {
-    assertDynamicImport,
-    colors,
-    confirm,
-    error,
-    fileExists,
-    warn,
+	assertDynamicImport,
+	colors,
+	confirm,
+	error,
+	fileExists,
+	warn,
 } from "../util/index.js";
+import { UserInfo } from "node:os";
 
 // Returns a string that can be used to import() actions
 // thisfile is used for recursive imports

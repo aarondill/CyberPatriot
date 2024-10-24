@@ -12,22 +12,22 @@ declare global {
 }
 // }}}
 // import "zx/globals";
-import { hostname, userInfo } from "node:os";
+import { hostname } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { $, which } from "zx";
 import { runActions } from "./actions/index.js";
 import { parseConfig } from "./config.js";
 import {
-    abort,
-    assertRoot,
-    confirm,
-    error,
-    findFile,
-    getHome,
-    isVM,
-    isWindows,
-    warn,
+	abort,
+	assertRoot,
+	confirm,
+	error,
+	findFile,
+	userInfo,
+	isVM,
+	isWindows,
+	warn,
 } from "./util/index.js";
 
 $.prefix = "set -euC -o pipefail;";
@@ -43,7 +43,8 @@ async function main(args: string[]) {
 	if (!(await isVM()))
 		warn("Warning: This machine was not detected as a virtual machine!");
 
-	const { username } = userInfo();
+	const info = userInfo();
+	const { username, homedir } = info;
 	const msg = `run the script on this machine (${username}:${hostname()})`;
 	if (!(await confirm(msg, false))) return abort(null, 1);
 
@@ -57,7 +58,8 @@ async function main(args: string[]) {
 		args,
 		config,
 		root,
-		home: getHome(),
+		home: homedir,
+		userInfo: info,
 	});
 	return suc === false ? 1 : 0;
 }
