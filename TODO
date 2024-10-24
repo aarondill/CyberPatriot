@@ -2,8 +2,6 @@
 
 - Use nala instead of apt on Ubuntu
   - Parallel downloads could save a competition.
-- Disable sudo password for current user
-  - Drop-in /etc/sudoers.d/cyberpatriot-user - for convenience
 - Make apt/sources.list work on Debian too
   - Check different repo URLs (allow any?)
 - Test on Windows!
