@@ -124,8 +124,8 @@ export async function cmp(
 			metadata === true
 				? (["mode", "uid", "gid"] as const)
 				: typeof metadata === "string"
-				  ? [metadata]
-				  : metadata;
+					? [metadata]
+					: metadata;
 		for (const key of compare) {
 			if (statA[key] !== statB[key]) return false;
 		}
@@ -191,14 +191,16 @@ export async function findFile(filename: string, from: string = process.cwd()) {
 export async function* walk(
 	dir: string,
 	// Whether to yeild directories or not.
-	directories: boolean = false
+	directories: boolean = false,
+	maxDepth: number = Infinity
 ): AsyncGenerator<string> {
+	if (maxDepth < 0) return; // we've reached the max depth
 	dir = path.resolve(dir);
 	const files = await fs.readdir(dir, { withFileTypes: true });
 	for (const file of files) {
 		const filepath = path.join(dir, file.name);
 		const isDirectory = file.isDirectory();
-		if (isDirectory) yield* walk(filepath); // we've found a directory. Yeild all the files from it
+		if (isDirectory) yield* walk(filepath, directories, maxDepth - 1); // we've found a directory. Yeild all the files from it
 		if (!isDirectory || directories) yield filepath; // yeild the current file or directory
 	}
 }
