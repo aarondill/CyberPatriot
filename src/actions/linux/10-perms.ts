@@ -41,11 +41,7 @@ async function handlePerms(permsFile: PathLike) {
 			errors.push(errMessage);
 		}
 	});
-	if (errors.length > 0) {
-		console.error("Congregated Errors:");
-		for (const err of errors) error(err);
-		return false;
-	}
+	if (errors.length > 0) return error("Congregated Errors:", ...errors);
 	return true;
 }
 
