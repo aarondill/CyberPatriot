@@ -1,11 +1,13 @@
 import crypto from "node:crypto";
-import { createReadStream } from "node:fs";
+import { createReadStream, PathLike, PathOrFileDescriptor } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { $ } from "zx";
 import { downloadFile } from "../../util/file.js";
 import { commandStatus, warn } from "../../util/index.js";
 import type { Action } from "../index.js";
+import { once } from "node:events";
+import { Param0, Parameters } from "tsafe";
 
 const NEOVIM_REPO = "https://github.com/neovim/neovim";
 const NVIM_BIN = "/usr/bin/nvim";
@@ -27,14 +29,18 @@ function getReleaseURL(tag: string, filename: string) {
 	return url;
 }
 
-function checksumFile(hashName: string, path: string) {
-	return new Promise<string>((resolve, reject) => {
-		const hash = crypto.createHash(hashName);
-		const stream = createReadStream(path);
-		stream.on("error", reject);
-		stream.on("data", chunk => hash.update(chunk));
-		stream.on("end", () => resolve(hash.digest("hex")));
-	});
+// Note: this function takes ownership of the file descriptor. It is considered invalid to use it afterwards.
+function checksumFile(hashName: string, path: string | number) {
+	const args: Parameters<typeof createReadStream> =
+		typeof path === "string" ? [path] : ["", { fd: path }];
+	return new Promise<string>((resolve, reject) =>
+		createReadStream(...args)
+			.on("error", reject)
+			.pipe(crypto.createHash(hashName))
+			.setEncoding("hex")
+			.on("data", resolve)
+			.on("error", reject)
+	);
 }
 
 async function appimageDeps() {
@@ -55,7 +61,7 @@ async function appimageDeps() {
 async function checkChecksum(type: string, filepath: string, expected: string) {
 	const hashExpected = expected.split(/\s+/)[0];
 	const hashActual = await checksumFile(type, filepath);
-	return [hashActual === hashExpected, hashActual, hashExpected];
+	return [hashActual === hashExpected, hashActual, hashExpected] as const;
 }
 
 async function getNvim() {
