@@ -2,12 +2,11 @@ import fs from "node:fs/promises";
 import { isNativeError } from "util/types";
 import { $, question } from "zx";
 import {
-    commandStatus,
-    confirm,
-    error,
-    getURL,
-    openFile,
-    warn,
+	commandStatus,
+	confirm,
+	error,
+	getURL,
+	warn,
 } from "../../util/index.js";
 import type { AdminUser } from "../../util/users.js";
 import { getUsersFromURL } from "../../util/users.js";
@@ -28,20 +27,18 @@ async function* getNonSystemUsers(): AsyncGenerator<[string, number]> {
 }
 
 async function getUsersInGroup(group: string | number) {
-	return await openFile("/etc/group", "r", async fd => {
-		for await (const line of fd.readLines()) {
-			const [groupName, , gidString, users] = line.trim().split(":");
-			if (gidString.trim() === "")
-				throw new Error(`Empty group id: ${groupName}`);
-			const gid = +gidString;
-			if (isNaN(gid)) throw new Error(`Invalid group id: ${gidString}`);
-			// Check if group matches the name or the id.
-			if (group !== groupName && group !== gid) continue;
-
-			return users.split(",");
-		}
-		return null;
-	});
+	const fd = await fs.open("/etc/group", "r");
+	for await (const line of fd.readLines({ autoClose: true })) {
+		const [groupName, , gidString, users] = line.trim().split(":");
+		if (gidString.trim() === "")
+			throw new Error(`Empty group id: ${groupName}`);
+		const gid = +gidString;
+		if (isNaN(gid)) throw new Error(`Invalid group id: ${gidString}`);
+		// Check if group matches the name or the id.
+		if (group !== groupName && group !== gid) continue;
+		return users.split(",");
+	}
+	return null;
 }
 
 async function removeNonPermittedUsers(permitted: string[]) {
@@ -72,7 +69,6 @@ async function removeNonAdminUsers(sudoers: string[], adminUsers: AdminUser[]) {
 
 		await commandStatus($`deluser ${username} sudo`);
 	}
-	return sudoers;
 }
 
 async function addMissingAdminUsers(admins: AdminUser[], sudoers: string[]) {
@@ -111,38 +107,23 @@ async function setPasswords(admin: AdminUser[]) {
 	}
 }
 
-// function USERS_DEBUG() {
-// 	warn("DEBUG USERS are being used for testing!");
-// 	const admins = ["admin1", "admin2", "admin3"];
-// 	const regulars = ["regular1", "regular2", "regular3"];
-// 	const res: Users = {
-// 		admin: admins.map(u => ({ username: u, password: "<PASSWORD>" })),
-// 		regular: regulars,
-// 		all: admins.concat(regulars),
-// 	};
-// 	res.regular.sort((a, b) => a.localeCompare(b));
-// 	res.all.sort((a, b) => a.localeCompare(b));
-// 	res.admin.sort((a, b) => a.username.localeCompare(b.username));
-// 	return res;
-// }
-export async function run() {
-	let permittedUsers;
-	// permittedUsers = USERS_DEBUG();
-	while (!permittedUsers) {
+async function getUsers() {
+	// eslint-disable-next-line no-constant-condition
+	while (true) {
 		const url = await getURL("What is the URL of the readme? ");
-		if (!url) return true; // abort -- empty input
+		if (!url) return; // abort -- empty input
 		try {
-			permittedUsers = await getUsersFromURL(url);
+			return await getUsersFromURL(url);
 		} catch (e) {
-			error(
-				`Failed to get users from URL. Error: ${
-					isNativeError(e) ? e.message : String(e)
-				}`
-			);
+			error(`Failed to get users from URL. Error: ${String(e)}`);
 			error("Check your spelling and internet connection and try again.");
-			permittedUsers = undefined;
 		}
 	}
+}
+export async function run() {
+	const permittedUsers = await getUsers();
+	if (!permittedUsers) return true; // abort
+
 	const foundUsers = await removeNonPermittedUsers(permittedUsers.all);
 
 	await addMissingUsers(permittedUsers.all, foundUsers);
