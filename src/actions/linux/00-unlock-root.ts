@@ -1,11 +1,10 @@
 import { $ } from "zx";
-import { warn } from "../../util/flow.js";
 import type { Action } from "../index.js";
+import { commandStatus } from "../../util/index.js";
 
 export async function run() {
 	console.log("Updating root password...");
-	const { exitCode } = await $`passwd root`.nothrow();
-	if (exitCode !== 0) warn("Command failed.");
+	await commandStatus($`passwd root`);
 }
 
 export default run satisfies Action;
