@@ -1,18 +1,21 @@
 import fs from "node:fs/promises";
 import { $, echo, which } from "zx";
 import {
-    backup,
-    confirm,
-    error,
-    isProcessOutput,
-    mapFile,
+	backup,
+	confirm,
+	error,
+	getApt,
+	isProcessOutput,
+	mapFile,
 } from "../../util/index.js";
 import type { Action } from "../index.js";
 
 // NOTE: because euid is changed, not uid, child processes are spawned as root!
 
-async function updateApt(apt: string) {
-	if (!(await confirm("update the system (apt)", true))) return true;
+async function updateApt() {
+	const apt = await getApt();
+	if (!apt) return error("Could not find apt!");
+	if (!(await confirm(`update the system (${apt})`, true))) return true;
 	try {
 		await $`${apt} update`;
 		await $`${apt} upgrade`;
@@ -26,9 +29,6 @@ async function updateApt(apt: string) {
 // TODO: make this work with debian
 const repoRegex = /^(#\s*)?deb http/;
 async function fixApt() {
-	const apt = await which("apt", { nothrow: true });
-	if (!apt) return error("Could not find apt!");
-
 	const sources = await fs
 		.readdir("/etc/apt/sources.list.d/")
 		.catch(() => null);
@@ -52,7 +52,7 @@ async function fixApt() {
 		return `# ${line}`; // Comment all other entries
 	});
 
-	return await updateApt(apt);
+	return await updateApt();
 }
 
 export const description = "Fix apt sources and update the system";

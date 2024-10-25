@@ -5,7 +5,13 @@ import { id } from "tsafe";
 import { $, which } from "zx";
 import type { YamlConfig } from "../../config.js";
 import { fileExists, openFile, walk } from "../../util/file.js";
-import { backup, commandStatus, error, warn } from "../../util/index.js";
+import {
+	backup,
+	commandStatus,
+	error,
+	getApt,
+	warn,
+} from "../../util/index.js";
 import { egid, euid } from "../../util/root.js";
 import { isNodeError } from "../../util/types.js";
 import type { Action, ActionOptions } from "../index.js";
@@ -30,14 +36,9 @@ async function updateCopy(home: string, root: string, rcfiles: string) {
 
 async function installPackages(...packages: string[]) {
 	if (packages.length === 0) return; // If no packages are specified, do nothing.
-	const apt = await which("apt", { nothrow: true });
-	if (!apt) {
-		const thisfile = path.basename(fileURLToPath(import.meta.url));
-		return error(
-			`Could not find apt! ${thisfile} currently only works on debian-based systems!`
-		);
-	}
-	await commandStatus($`apt install -- ${packages}`);
+	const apt = await getApt();
+	if (!apt) return error(`Could not find apt!`);
+	await commandStatus($`${apt} install -- ${packages}`);
 }
 
 async function getOSID() {
@@ -73,11 +74,11 @@ async function handlePackages({ packages }: YamlConfig) {
 	if (suc === false) return false;
 }
 
-async function isGitRepo(path: string) {
+async function isGitRepo(path: string, git = "git") {
 	const stat = await fs.stat(path).catch(() => null);
 	if (!stat) return false;
 	if (!stat.isDirectory()) return false;
-	const { exitCode } = await $`git -C ${path} rev-parse`.quiet().nothrow();
+	const { exitCode } = await $`${git} -C ${path} rev-parse`.quiet().nothrow();
 	return exitCode === 0;
 }
 
@@ -105,7 +106,7 @@ async function handleClone(home: string, { clone }: YamlConfig) {
 		}
 		args ??= [];
 		// Already exists *and* is a git repo
-		if (await isGitRepo(filepath)) continue;
+		if (await isGitRepo(filepath, git)) continue;
 
 		await commandStatus($`${git} clone ${args} -- ${url} ${filepath}`);
 		// Make sure that the repo has the right owner.
