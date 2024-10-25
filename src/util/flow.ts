@@ -25,17 +25,17 @@ export async function confirm(
  * Support $NO_COLOR
  * usage: where you would write: `chalk.bold.red(msg)`, instead use `colors(chalk.bold.red, msg)`
  */
-export function colors(chalkFunc: (arg0: string) => string, s: string) {
-	if (process.env.NO_COLOR && process.env.NO_COLOR.trim() !== "") return s;
-	return chalkFunc(s);
+export function colors(chalkFunc: (arg0: string) => string, ...strs: string[]) {
+	if (process.env.NO_COLOR && process.env.NO_COLOR.trim() !== "") return strs;
+	return strs.map(chalkFunc);
 }
 
-export function warn(s: string): false {
-	console.error(colors(chalk.bold.yellowBright, s));
+export function warn(...strs: string[]): false {
+	console.error(...colors(chalk.bold.yellowBright, ...strs));
 	return false;
 }
-export function error(s: string): false {
-	console.error(colors(chalk.bold.red, s));
+export function error(...strs: string[]): false {
+	console.error(...colors(chalk.bold.red, ...strs));
 	return false;
 }
 // Note: This does not exit the process! Make sure you return after this!
