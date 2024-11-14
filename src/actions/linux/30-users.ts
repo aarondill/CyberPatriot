@@ -1,5 +1,4 @@
 import fs from "node:fs/promises";
-import { isNativeError } from "util/types";
 import { $, question } from "zx";
 import {
 	commandStatus,

@@ -1,6 +1,5 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { id } from "tsafe";
 import { $, which } from "zx";
 import type { YamlConfig } from "../../config.js";

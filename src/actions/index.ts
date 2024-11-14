@@ -165,7 +165,7 @@ export async function runActions(opts: ActionOptions): Promise<boolean> {
 		const descColor = colors(
 			chalk.blueBright.bold,
 			action.description ?? filepath
-		);
+		)[0];
 		const msg = `run action '${descColor}'`;
 		if (!(await confirm(msg, true))) continue;
 

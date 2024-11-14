@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { $, echo, which } from "zx";
+import { $, echo } from "zx";
 import {
 	backup,
 	confirm,
