@@ -57,5 +57,5 @@ Arrays are considered a single value.
 export type DeepNullable<T> = T extends unknown[]
 	? Nullable<T>
 	: T extends object
-	  ? Nullable<{ [K in keyof T]?: DeepNullable<T[K]> }>
-	  : Nullable<T>;
+		? Nullable<{ [K in keyof T]?: DeepNullable<T[K]> }>
+		: Nullable<T>;

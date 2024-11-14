@@ -24,9 +24,9 @@ import {
 	confirm,
 	error,
 	findFile,
-	userInfo,
 	isVM,
 	isWindows,
+	userInfo,
 	warn,
 } from "./util/index.js";
 

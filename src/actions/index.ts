@@ -46,7 +46,7 @@ import {
 	fileExists,
 	warn,
 } from "../util/index.js";
-import { UserInfo } from "node:os";
+import type { UserInfo } from "node:os";
 
 // Returns a string that can be used to import() actions
 // thisfile is used for recursive imports

@@ -7,7 +7,8 @@ import { downloadFile } from "../../util/file.js";
 import { commandStatus, warn } from "../../util/index.js";
 import type { Action } from "../index.js";
 import { once } from "node:events";
-import { Param0, Parameters } from "tsafe";
+import type { Parameters } from "tsafe";
+import { Param0 } from "tsafe";
 
 const NEOVIM_REPO = "https://github.com/neovim/neovim";
 const NVIM_BIN = "/usr/bin/nvim";
