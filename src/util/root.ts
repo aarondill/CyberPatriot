@@ -65,4 +65,5 @@ function asUser<Args extends unknown[], T>(
 // This should be used instead of os.homedir
 // This should be used instad of $HOME because the sudo command will set the HOME variable
 // use userInfo instead of os.homedir because sudo will set the HOME variable.
-export const userInfo = asUser.bind(os.userInfo);
+export const userInfo = (...args: Parameters<typeof os.userInfo>) =>
+	asUser(os.userInfo, ...args);
