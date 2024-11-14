@@ -1,4 +1,4 @@
-import { question, chalk } from "zx";
+import { chalk, question } from "zx";
 import type { Nullable } from "./types.js";
 export async function confirm(
 	what: string,
@@ -27,7 +27,7 @@ export async function confirm(
  */
 export function colors(chalkFunc: (arg0: string) => string, ...strs: string[]) {
 	if (process.env.NO_COLOR && process.env.NO_COLOR.trim() !== "") return strs;
-	return strs.map(chalkFunc);
+	return strs.map(s => chalkFunc(s));
 }
 
 export function warn(...strs: string[]): false {
