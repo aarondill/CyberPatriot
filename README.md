@@ -1,6 +1,10 @@
 # CyberPatriot
 
 Scripts for CyberPatriot
+Requires NPM
+run `./scripts/setup` to ensure proper node and npm versions
+run `npm install` to install dependencies
+run `npm run start` to start the program.
 
 ## `./rc.yaml`
 
