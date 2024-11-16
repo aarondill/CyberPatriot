@@ -1,6 +1,7 @@
 # CyberPatriot
 
-Scripts for CyberPatriot
+Scripts for CyberPatriot.
+
 Requires NPM.
 
 - run `./scripts/setup` to ensure proper node and npm versions
