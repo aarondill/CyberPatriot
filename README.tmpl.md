@@ -1,4 +1,3 @@
-<!-- This file is generated from README.tmpl.md -->
 # CyberPatriot
 
 Scripts for CyberPatriot.
@@ -33,20 +32,3 @@ Each key is a path (relative to HOME). Tilde expansion is allowed.
     args: []
 ````
 `````
-
-### Lines of code
-cloc|github.com/AlDanial/cloc v 1.96
---- | ---
-
-Language|files|blank|comment|code
-:-------|-------:|-------:|-------:|-------:
-Text|2|0|0|3262
-TypeScript|31|164|171|1500
-Bourne Again Shell|41|219|449|1239
-Bourne Shell|5|54|115|332
-JavaScript|3|15|42|282
-JSON|3|0|0|88
-Markdown|2|23|0|41
-YAML|2|1|5|40
---------|--------|--------|--------|--------
-SUM:|89|476|782|6784
