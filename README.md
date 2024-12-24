@@ -35,6 +35,7 @@ Each key is a path (relative to HOME). Tilde expansion is allowed.
 `````
 
 ### Lines of code
+<sup><sub>Generated at commit 8c9bfaea643e229860acb93a4b3a08706c1142fa</sub></sup>
 cloc|github.com/AlDanial/cloc v 1.96
 --- | ---
 
@@ -46,7 +47,7 @@ Bourne Again Shell|41|219|449|1239
 Bourne Shell|5|54|115|332
 JavaScript|3|15|42|282
 JSON|3|0|0|88
-Markdown|2|23|0|41
-YAML|2|1|5|40
+Markdown|3|37|1|78
+YAML|2|1|5|62
 --------|--------|--------|--------|--------
-SUM:|89|476|782|6784
+SUM:|90|490|783|6843
