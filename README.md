@@ -3,6 +3,9 @@
 
 Scripts for CyberPatriot.
 
+This script is made open source.  
+Pull Requests will be considered, but issues will be closed.
+
 Requires NPM.
 
 - run `./scripts/setup` to ensure proper node and npm versions
